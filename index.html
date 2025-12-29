@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中华圣学修身《心安工程》日报系统 - 终极优化版</title>
+    <link rel="stylesheet" href="cssprint.css">
+    <!-- 引入图标库（可选，用于辅助功能图标） -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+    <!-- 顶部导航区 -->
+    <div class="header-nav">
+        <div class="header-title">中华圣学修身《心安工程》日报系统</div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="saveDraft()">保存草稿</button>
+            <button class="header-btn" onclick="generateLivePreview()">预览日报</button>
+            <button class="header-btn" onclick="exportPDF()">导出PDF</button>
+            <button class="header-btn" onclick="exportPNG()">导出图片</button>
+            <button class="header-btn" onclick="submitSync()">提交同步</button>
+            <div class="auxiliary-functions">
+                <i class="aux-icon fa fa-microphone" id="voiceToggle" title="语音输入开关" onclick="toggleVoiceInput()"></i>
+                <i class="aux-icon fa fa-question-circle" title="帮助指南" onclick="showHelp()"></i>
+                <i class="aux-icon fa fa-history" title="历史记录" onclick="showHistory()"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主体容器 -->
+    <div class="main-container">
+        <!-- 主体填写区 -->
+        <div class="form-panel">
+            <!-- 模块1：基础信息（必填） -->
+            <div class="form-module">
+                <div class="module-title" onclick="toggleModule(this)">
+                    基础信息 <span class="complete-mark" id="module1-complete">✓</span>
+                </div>
+                <div class="module-content">
+                    <div class="form-group">
+                        <label class="form-label required" for="date">日期</label>
+                        <input type="text" class="input-field" id="date" readonly placeholder="YYYY-MM-DD">
+                        <p class="form-hint">自动生成当前日期，点击可打开日历弹窗修改</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required" for="weekday">星期</label>
+                        <input type="text" class="input-field" id="weekday" readonly placeholder="星期一">
+                        <p class="form-hint">随日期自动生成，无需手动修改</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required" for="report_id">日报编号</label>
+                        <input type="text" class="input-field" id="report_id" readonly placeholder="251229001">
+                        <p class="form-hint">规则：年份后两位+月份+日期+3位序号，自动递增避免重复</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required" for="core_direction">核心修习方向</label>
+                        <select class="input-field" id="core_direction" multiple onchange="handleCoreDirectionChange()">
+                            <option value="圣学心传">圣学心传</option>
+                            <option value="圣学心践">圣学心践</option>
+                            <option value="道德经五维">道德经五维</option>
+                        </select>
+                        <div class="tags-container" id="core_direction_tags"></div>
+                        <p class="form-hint">可多选，选中后以彩色标签展示，心传#2E7D32/心践#81C784/五维#00695C</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required" for="weather">天气/环境备注</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" class="input-field" id="weather" placeholder="晴/居家修习" list="weather_suggestions">
+                            <datalist id="weather_suggestions">
+                                <option value="晴/居家"></option>
+                                <option value="晴/书房"></option>
+                                <option value="晴/户外"></option>
+                                <option value="晴/办公"></option>
+                                <option value="阴/居家"></option>
+                                <option value="阴/书房"></option>
+                                <option value="阴/户外"></option>
+                                <option value="阴/办公"></option>
+                                <option value="雨/居家"></option>
+                                <option value="雨/书房"></option>
+                                <option value="雨/办公"></option>
+                                <option value="雪/居家"></option>
+                                <option value="雪/书房"></option>
+                                <option value="雪/办公"></option>
+                            </datalist>
+                        </div>
+                        <p class="form-hint">预设选项：晴/阴/雨/雪 + 居家/书房/户外/办公，支持自定义输入</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模块2：《中华圣学心传》先天智慧体悟 -->
+            <div class="form-module">
+                <div class="module-title" onclick="toggleModule(this)">
+                    《中华圣学心传》先天智慧体悟 <span class="complete-mark" id="module2-complete"></span>
+                </div>
+                <div class="module-content">
+                    <div class="form-group">
+                        <label class="form-label" for="xinchuan_proverb">今日箴言</label>
+                        <div style="display: flex; gap: 8px; align-items: flex-start;">
+                            <textarea class="input-field" id="xinchuan_proverb" rows="3" placeholder="本心流露或原文摘录（例：万物衍化本清静）" style="flex: 1;"></textarea>
+                            <button class="voice-btn" onclick="startVoice('xinchuan_proverb')" id="voice-btn-proverb">🎤</button>
+                        </div>
+                        <p class="form-hint">支持手动输入/粘贴/语音转文字</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="xinchuan_scene">日常应用场景</label>
+                        <textarea class="input-field" id="xinchuan_scene" rows="3" placeholder="具体场景+践行动作（例：同事争执时，践行'不争'箴言，主动退让）" oninput="checkInputLength(this, 10)"></textarea>
+                        <p class="form-hint" id="scene-length-hint">最少输入10个字，请补充完整</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="xinchuan_eight">八维定位</label>
+                        <select class="input-field" id="xinchuan_eight">
+                            <option value="">请选择</option>
+                            <option value="道维-破妄见真">道维-破妄见真</option>
+                            <option value="德维-积德显真">德维-积德显真</option>
+                            <option value="仁维-仁爱显真">仁维-仁爱显真</option>
+                            <option value="义维-义行守真">义维-义行守真</option>
+                            <option value="礼维-礼序安真">礼维-礼序安真</option>
+                            <option value="智维-明智辨真">智维-明智辨真</option>
+                            <option value="信维-诚信归真">信维-诚信归真</option>
+                            <option value="融维-圆融通真">融维-圆融通真</option>
+                        </select>
+                        <p class="form-hint">单选，对应《中华圣学心传》核心八维</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="xinchuan_six">六序进度</label>
+                        <select class="input-field" id="xinchuan_six" multiple onchange="handleSixOrderChange()">
+                            <option value="惊觉">惊觉</option>
+                            <option value="领悟">领悟</option>
+                            <option value="透视">透视</option>
+                            <option value="认取">认取</option>
+                            <option value="担当">担当</option>
+                            <option value="践行">践行</option>
+                        </select>
+                        <div class="tags-container" id="six_order_tags"></div>
+                        <p class="form-hint">可多选，选中后以标签化展示，支持取消选择</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="xinchuan_energy">能量感知</label>
+                        <div class="range-container">
+                            <input type="range" class="range-field" id="xinchuan_energy_range" min="1" max="10" value="5" oninput="syncRangeValue('xinchuan_energy_range', 'xinchuan_energy_value')">
+                            <input type="number" class="input-field range-value" id="xinchuan_energy_value" min="1" max="10" value="5" oninput="syncRangeInput('xinchuan_energy_value', 'xinchuan_energy_range')">
+                        </div>
+                        <p class="form-hint emphasis" id="energy-hint">5分=状态中等</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="xinchuan_wangnian_type">妄念类型</label>
+                        <select class="input-field" id="xinchuan_wangnian_type" onchange="toggleWangnianOther()">
+                            <option value="">请选择</option>
+                            <option value="求认可">求认可</option>
+                            <option value="贪速成">贪速成</option>
+                            <option value="攀比心">攀比心</option>
+                            <option value="嗔怒心">嗔怒心</option>
+                            <option value="懈怠心">懈怠心</option>
+                            <option value="其他">其他</option>
+                        </select>
+                        <input type="text" class="input-field" id="xinchuan_wangnian_other" placeholder="请输入自定义妄念类型" style="margin-top: 8px; display: none;">
+                        <p class="form-hint">选“其他”后可自定义输入具体妄念类型</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="xinchuan_count">格除次数</label>
+                        <input type="number" class="input-field" id="xinchuan_count" min="0" max="99" value="0" placeholder="0">
+                        <p class="form-hint">范围0-99，支持上下箭头增减</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模块3：《中华圣学心践论》十目践行记录（核心模块） -->
+            <div class="form-module">
+                <div class="module-title" onclick="toggleModule(this)">
+                    《中华圣学心践论》十目践行记录 <span class="complete-mark" id="module3-complete"></span>
+                </div>
+                <div class="module-content">
+                    <div class="ten-items-grid">
+                        <!-- 1. 格念 -->
+                        <div class="item-cell">
+                            <label class="form-label">1. 格念</label>
+                            <div class="item-radio-group">
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_1" value="践行" onchange="toggleItemRemark('xinjian_1_remark')"> 践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_1" value="未践行" onchange="toggleItemRemark('xinjian_1_remark')"> 未践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_1" value="部分践行" onchange="toggleItemRemark('xinjian_1_remark', true)"> 部分践行
+                                </label>
+                            </div>
+                            <input type="text" class="item-remark" id="xinjian_1_remark" placeholder="例：3次成功2次遗漏">
+                        </div>
+                        <!-- 2. 正心 -->
+                        <div class="item-cell">
+                            <label class="form-label">2. 正心</label>
+                            <div class="item-radio-group">
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_2" value="践行" onchange="toggleItemRemark('xinjian_2_remark')"> 践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_2" value="未践行" onchange="toggleItemRemark('xinjian_2_remark')"> 未践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_2" value="部分践行" onchange="toggleItemRemark('xinjian_2_remark', true)"> 部分践行
+                                </label>
+                            </div>
+                            <input type="text" class="item-remark" id="xinjian_2_remark" placeholder="例：3次成功2次遗漏">
+                        </div>
+                        <!-- 3. 修身 -->
+                        <div class="item-cell">
+                            <label class="form-label">3. 修身</label>
+                            <div class="item-radio-group">
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_3" value="践行" onchange="toggleItemRemark('xinjian_3_remark')"> 践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_3" value="未践行" onchange="toggleItemRemark('xinjian_3_remark')"> 未践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_3" value="部分践行" onchange="toggleItemRemark('xinjian_3_remark', true)"> 部分践行
+                                </label>
+                            </div>
+                            <input type="text" class="item-remark" id="xinjian_3_remark" placeholder="例：3次成功2次遗漏">
+                        </div>
+                        <!-- 4. 处事 -->
+                        <div class="item-cell">
+                            <label class="form-label">4. 处事</label>
+                            <div class="item-radio-group">
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_4" value="践行" onchange="toggleItemRemark('xinjian_4_remark')"> 践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_4" value="未践行" onchange="toggleItemRemark('xinjian_4_remark')"> 未践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_4" value="部分践行" onchange="toggleItemRemark('xinjian_4_remark', true)"> 部分践行
+                                </label>
+                            </div>
+                            <input type="text" class="item-remark" id="xinjian_4_remark" placeholder="例：3次成功2次遗漏">
+                        </div>
+                        <!-- 5. 接物 -->
+                        <div class="item-cell">
+                            <label class="form-label">5. 接物</label>
+                            <div class="item-radio-group">
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_5" value="践行" onchange="toggleItemRemark('xinjian_5_remark')"> 践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_5" value="未践行" onchange="toggleItemRemark('xinjian_5_remark')"> 未践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_5" value="部分践行" onchange="toggleItemRemark('xinjian_5_remark', true)"> 部分践行
+                                </label>
+                            </div>
+                            <input type="text" class="item-remark" id="xinjian_5_remark" placeholder="例：3次成功2次遗漏">
+                        </div>
+                        <!-- 6. 齐家 -->
+                        <div class="item-cell">
+                            <label class="form-label">6. 齐家</label>
+                            <div class="item-radio-group">
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_6" value="践行" onchange="toggleItemRemark('xinjian_6_remark')"> 践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_6" value="未践行" onchange="toggleItemRemark('xinjian_6_remark')"> 未践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_6" value="部分践行" onchange="toggleItemRemark('xinjian_6_remark', true)"> 部分践行
+                                </label>
+                            </div>
+                            <input type="text" class="item-remark" id="xinjian_6_remark" placeholder="例：3次成功2次遗漏">
+                        </div>
+                        <!-- 7. 济世 -->
+                        <div class="item-cell">
+                            <label class="form-label">7. 济世</label>
+                            <div class="item-radio-group">
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_7" value="践行" onchange="toggleItemRemark('xinjian_7_remark')"> 践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_7" value="未践行" onchange="toggleItemRemark('xinjian_7_remark')"> 未践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_7" value="部分践行" onchange="toggleItemRemark('xinjian_7_remark', true)"> 部分践行
+                                </label>
+                            </div>
+                            <input type="text" class="item-remark" id="xinjian_7_remark" placeholder="例：3次成功2次遗漏">
+                        </div>
+                        <!-- 8. 一贯 -->
+                        <div class="item-cell">
+                            <label class="form-label">8. 一贯</label>
+                            <div class="item-radio-group">
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_8" value="践行" onchange="toggleItemRemark('xinjian_8_remark')"> 践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_8" value="未践行" onchange="toggleItemRemark('xinjian_8_remark')"> 未践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_8" value="部分践行" onchange="toggleItemRemark('xinjian_8_remark', true)"> 部分践行
+                                </label>
+                            </div>
+                            <input type="text" class="item-remark" id="xinjian_8_remark" placeholder="例：3次成功2次遗漏">
+                        </div>
+                        <!-- 9. 成性 -->
+                        <div class="item-cell">
+                            <label class="form-label">9. 成性</label>
+                            <div class="item-radio-group">
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_9" value="践行" onchange="toggleItemRemark('xinjian_9_remark')"> 践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_9" value="未践行" onchange="toggleItemRemark('xinjian_9_remark')"> 未践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_9" value="部分践行" onchange="toggleItemRemark('xinjian_9_remark', true)"> 部分践行
+                                </label>
+                            </div>
+                            <input type="text" class="item-remark" id="xinjian_9_remark" placeholder="例：3次成功2次遗漏">
+                        </div>
+                        <!-- 10. 化民 -->
+                        <div class="item-cell">
+                            <label class="form-label">10. 化民</label>
+                            <div class="item-radio-group">
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_10" value="践行" onchange="toggleItemRemark('xinjian_10_remark')"> 践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_10" value="未践行" onchange="toggleItemRemark('xinjian_10_remark')"> 未践行
+                                </label>
+                                <label class="item-radio-label">
+                                    <input type="radio" name="xinjian_10" value="部分践行" onchange="toggleItemRemark('xinjian_10_remark', true)"> 部分践行
+                                </label>
+                            </div>
+                            <input type="text" class="item-remark" id="xinjian_10_remark" placeholder="例：3次成功2次遗漏">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label class="form-label" for="xinjian_weld_density">焊缝能量密度</label>
+                        <div class="range-container">
+                            <input type="range" class="range-field" id="weld_density_range" min="1" max="10" value="5" oninput="syncRangeValue('weld_density_range', 'weld_density_value')">
+                            <input type="number" class="input-field range-value" id="weld_density_value" min="1" max="10" value="5" oninput="syncRangeInput('weld_density_value', 'weld_density_range')">
+                        </div>
+                        <p class="form-hint emphasis" id="density-hint">5分=中等密度，实时同步十目践行完成率</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模块4：《道德经・五维生命智慧体系探索》（默认折叠，选中五维后展开） -->
+            <div class="form-module">
+                <div class="module-title" onclick="toggleModule(this)" id="module4-title">
+                    《道德经・五维生命智慧体系探索》 <span class="complete-mark" id="module4-complete"></span>
+                </div>
+                <div class="module-content collapsed" id="module4-content">
+                    <div class="form-group">
+                        <label class="form-label" for="daodejing_chapter">对应书籍章节</label>
+                        <div class="search-select-container">
+                            <input type="text" class="input-field search-input" id="chapter_search" placeholder="输入关键词搜索（如：焦虑、攀比）" oninput="searchChapter()">
+                            <div class="search-results" id="chapter_results"></div>
+                        </div>
+                        <input type="hidden" id="daodejing_chapter" value="">
+                        <p class="form-hint emphasis" id="chapter-hint">请选择对应困惑章节，支持关键词快速搜索</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="wuwei_zhishen_time">治神时长（分钟）</label>
+                        <input type="number" class="input-field" id="wuwei_zhishen_time" min="0" step="0.5" placeholder="对应章节核心修习-治神时长" id="zhishen-required">
+                        <p class="form-hint" id="zhishen-hint">支持小数点（例：15.5）</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="wuwei_hrv">HRV数值（ms²）</label>
+                        <input type="number" class="input-field" id="wuwei_hrv" min="0" placeholder="生理监测数据（无则留空，对应章节能量涵养指标）">
+                        <p class="form-hint">无监测数据可留空，不影响日报提交</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="wuwei_shenju">神聚度</label>
+                        <div class="range-container">
+                            <input type="range" class="range-field" id="shenju_range" min="1" max="10" value="5" oninput="syncRangeValue('shenju_range', 'shenju_value')">
+                            <input type="number" class="input-field range-value" id="shenju_value" min="1" max="10" value="5" oninput="syncRangeInput('shenju_value', 'shenju_range')">
+                        </div>
+                        <p class="form-hint emphasis" id="shenju-hint">5分=中等聚度，选择章节后显示核心修习目标</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="wuwei_emotion">情绪稳定度</label>
+                        <div class="range-container">
+                            <input type="range" class="range-field" id="emotion_range" min="1" max="10" value="5" oninput="syncRangeValue('emotion_range', 'emotion_value')">
+                            <input type="number" class="input-field range-value" id="emotion_value" min="1" max="10" value="5" oninput="syncRangeInput('emotion_value', 'emotion_range')">
+                        </div>
+                        <p class="form-hint emphasis" id="emotion-hint">5分=中等稳定，选择章节后显示情志调和重点</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="wuwei_sleep">睡眠时长（小时）</label>
+                        <input type="number" class="input-field" id="wuwei_sleep" min="0" step="0.5" placeholder="对应章节治身篇-作息涵养数据">
+                        <p class="form-hint">步长0.5，支持输入如7.5、8.0等数值</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="wuwei_interaction">互动满意度</label>
+                        <div class="range-container">
+                            <input type="range" class="range-field" id="interaction_range" min="1" max="10" value="5" oninput="syncRangeValue('interaction_range', 'interaction_value')">
+                            <input type="number" class="input-field range-value" id="interaction_value" min="1" max="10" value="5" oninput="syncRangeInput('interaction_value', 'interaction_range')">
+                        </div>
+                        <p class="form-hint emphasis" id="interaction-hint">5分=中等满意，对应章节治世篇-人际践行效果</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模块5：总结与明日规划（必填） -->
+            <div class="form-module">
+                <div class="module-title" onclick="toggleModule(this)">
+                    总结与明日规划 <span class="complete-mark" id="module5-complete"></span>
+                </div>
+                <div class="module-content">
+                    <div class="form-group">
+                        <label class="form-label required" for="summary_feeling">今日核心感悟</label>
+                        <div style="display: flex; gap: 8px; align-items: flex-start;">
+                            <textarea class="input-field" id="summary_feeling" rows="4" placeholder="元认知反思（例：不争并非消极，而是内心清静的自然流露/修习第3章后，攀比焦虑明显缓解）" oninput="checkInputLength(this, 15)" style="flex: 1;"></textarea>
+                            <button class="voice-btn" onclick="startVoice('summary_feeling')" id="voice-btn-feeling">🎤</button>
+                        </div>
+                        <p class="form-hint" id="feeling-length-hint">最少输入15个字，请补充完整</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="summary_highlight">数据亮点</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" class="input-field" id="summary_highlight" placeholder="量化数据/践行成果（例：心践十目践行率90%/治神时长达标20分钟）" style="flex: 1;">
+                            <button class="header-btn" onclick="extractHighlight()" style="padding: 8px 12px; font-size: 12px;">提取亮点</button>
+                        </div>
+                        <p class="form-hint">点击“提取亮点”按钮，系统从已填数据中筛选达标项</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">明日重点-圣学</label>
+                        <div style="display: flex; gap: 15px; margin-top: 8px;">
+                            <div style="flex: 1;">
+                                <label class="form-label" style="font-size: 12px;">心传重点</label>
+                                <select class="input-field" id="tomorrow_xinchuan">
+                                    <option value="">请选择</option>
+                                    <option value="道维-破妄">道维-破妄</option>
+                                    <option value="德维-积德">德维-积德</option>
+                                    <option value="仁维-仁爱">仁维-仁爱</option>
+                                    <option value="义维-义行">义维-义行</option>
+                                    <option value="礼维-礼序">礼维-礼序</option>
+                                    <option value="智维-明智">智维-明智</option>
+                                    <option value="信维-诚信">信维-诚信</option>
+                                    <option value="融维-圆融">融维-圆融</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <label class="form-label" style="font-size: 12px;">心践重点</label>
+                                <select class="input-field" id="tomorrow_xinjian">
+                                    <option value="">请选择</option>
+                                    <option value="格念">格念</option>
+                                    <option value="正心">正心</option>
+                                    <option value="修身">修身</option>
+                                    <option value="处事">处事</option>
+                                    <option value="接物">接物</option>
+                                    <option value="齐家">齐家</option>
+                                    <option value="济世">济世</option>
+                                    <option value="一贯">一贯</option>
+                                    <option value="成性">成性</option>
+                                    <option value="化民">化民</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">明日重点-五维</label>
+                        <select class="input-field" id="tomorrow_wuwei">
+                            <option value="">请选择</option>
+                            <option value="治神篇重点">治神篇重点</option>
+                            <option value="治心篇重点">治心篇重点</option>
+                            <option value="治身篇重点">治身篇重点</option>
+                            <option value="治性篇重点">治性篇重点</option>
+                            <option value="治世篇重点">治世篇重点</option>
+                        </select>
+                        <p class="form-hint">对应《道德经》五维生命智慧体系，选择明日核心修习方向</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧实时预览区 -->
+        <div class="preview-panel">
+            <div class="preview-title">日报实时预览</div>
+            <div class="preview-content" id="live_preview">
+                <p>请填写表单内容，预览将实时同步更新...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部操作区 -->
+    <div class="footer-actions">
+        <button class="footer-btn" onclick="saveDraft()">保存草稿</button>
+        <button class="footer-btn" onclick="submitSync()">提交同步</button>
+        <button class="footer-btn" onclick="exportPDF()">导出PDF</button>
+        <button class="footer-btn" onclick="exportPNG()">导出图片</button>
+        <button class="footer-btn danger" onclick="clearForm()">清空重填</button>
+    </div>
+
+    <!-- 外部依赖库 -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- 自定义脚本 -->
+    <script src="jsrecognition.js"></script>
+    <script src="jsguidanceEngine.js"></script>
+    <script src="jsreportGenerator.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "dbVersion": "1.0.0",
+  "createTime": "2025-12-30T00:00:00.000Z",
+  "updateTime": "2025-12-30T00:00:00.000Z",
+  "description": "对学语音识别项目数据库，用于存储语音识别历史记录、配置信息等",
+  "voiceRecognitionHistory": [],
+  "systemConfig": {
+    "defaultLang": "zh-CN",
+    "autoSaveReport": true,
+    "maxHistoryCount": 1000,
+    "reportSavePath": "./data/"
+  }
+}
