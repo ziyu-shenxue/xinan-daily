@@ -175,7 +175,6 @@ body {
     background: #45a049;
 }
 
-/* 打印样式 */
 @media print {
     body {
         background: white;
@@ -194,7 +193,6 @@ body {
     }
 }
 
-/* 移动端适配 */
 @media (max-width: 768px) {
     .container {
         flex-direction: column;
