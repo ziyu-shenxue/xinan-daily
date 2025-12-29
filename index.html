@@ -5,12 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>中华圣学《心安工程》日报系统</title>
     <link rel="stylesheet" href="css/print.css">
+    
+    <!-- 修复：CDN加载检测与Fallback -->
+    <script>
+        window.html2canvasPath = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+        window.jspdfPath = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        
+        window.addEventListener('error', (e) => {
+            if (e.target.tagName === 'SCRIPT') {
+                if (e.target.src.includes('html2canvas')) {
+                    console.warn('html2canvas CDN失败，加载备用');
+                    loadScript('https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js');
+                }
+                if (e.target.src.includes('jspdf')) {
+                    console.warn('jsPDF CDN失败，加载备用');
+                    loadScript('https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js');
+                }
+            }
+        }, true);
+        
+        function loadScript(url) {
+            const script = document.createElement('script');
+            script.src = url;
+            document.head.appendChild(script);
+        }
+    </script>
+    
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <!-- 双录入围栏 -->
+        <!-- 左侧：录入面板 -->
         <div class="input-panel">
             <h1>📜 中华圣学《心安工程》日报填写</h1>
             
