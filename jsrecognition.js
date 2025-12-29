@@ -1,8 +1,8 @@
-// 语音识别核心模块
+// 语音识别核心模块（修复版）
 window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (!window.SpeechRecognition) {
-    alert('⚠️ 您的浏览器不支持语音识别，请使用Chrome/Edge/Safari');
+    alert('⚠️ 您的浏览器不支持语音识别\n请使用：Chrome/Edge/Safari\n微信用户请点击右上角"..." → "在浏览器打开"');
 }
 
 const recognition = new SpeechRecognition();
@@ -12,7 +12,20 @@ recognition.interimResults = false;
 
 let currentVoiceField = null;
 
-function startVoice(fieldId) {
+// 强制请求麦克风权限
+async function requestMicrophonePermission() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        return true;
+    } catch (err) {
+        console.error('麦克风权限失败:', err);
+        alert('麦克风权限被拒绝\n请检查浏览器设置: ' + err.message);
+        return false;
+    }
+}
+
+async function startVoice(fieldId) {
     currentVoiceField = document.getElementById(fieldId);
     if (!currentVoiceField) return;
     
@@ -20,25 +33,22 @@ function startVoice(fieldId) {
     btn.classList.add('recording');
     btn.textContent = '🔴';
     
-    // 移动端权限处理
-    if (navigator.mediaDevices) {
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(() => {
-                recognition.start();
-            })
-            .catch(err => {
-                alert('麦克风权限被拒绝：' + err.message);
-                stopRecording();
-            });
+    const hasPermission = await requestMicrophonePermission();
+    if (hasPermission) {
+        try {
+            recognition.start();
+        } catch (err) {
+            alert('语音识别启动失败: ' + err.message);
+            stopRecording();
+        }
     } else {
-        recognition.start();
+        stopRecording();
     }
 }
 
 recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
     
-    // 智能处理：数字字段自动提取数字
     if (currentVoiceField.type === 'number') {
         const numbers = transcript.match(/\d+/g);
         if (numbers) {
@@ -50,7 +60,6 @@ recognition.onresult = (event) => {
         currentVoiceField.value = transcript;
     }
     
-    // 触发实时预览
     if (currentVoiceField.oninput) {
         currentVoiceField.oninput();
     }
@@ -59,7 +68,21 @@ recognition.onresult = (event) => {
 };
 
 recognition.onerror = (event) => {
-    alert('语音识别错误：' + event.error);
+    let errorMsg = '';
+    switch(event.error) {
+        case 'no-speech':
+            errorMsg = '未检测到语音，请重试';
+            break;
+        case 'audio-capture':
+            errorMsg = '无法访问麦克风';
+            break;
+        case 'not-allowed':
+            errorMsg = '麦克风权限被拒绝';
+            break;
+        default:
+            errorMsg = '语音识别错误: ' + event.error;
+    }
+    alert(errorMsg);
     stopRecording();
 };
 
@@ -73,12 +96,4 @@ function stopRecording() {
         btn.classList.remove('recording');
         btn.textContent = '🎤';
     }
-}
-
-// 语音测试功能（用于调试）
-function testVoice() {
-    recognition.start();
-    recognition.onresult = (e) => {
-        alert('测试成功！识别内容：' + e.results[0][0].transcript);
-    };
 }
