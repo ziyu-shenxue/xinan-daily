@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中华圣学《心安工程》日报系统</title>
+    <link rel="stylesheet" href="css/print.css">
+    
+    <!-- 修复：CDN加载检测与Fallback -->
+    <script>
+        window.html2canvasPath = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+        window.jspdfPath = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        
+        window.addEventListener('error', (e) => {
+            if (e.target.tagName === 'SCRIPT') {
+                if (e.target.src.includes('html2canvas')) {
+                    console.warn('html2canvas CDN失败，加载备用');
+                    loadScript('https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js');
+                }
+                if (e.target.src.includes('jspdf')) {
+                    console.warn('jsPDF CDN失败，加载备用');
+                    loadScript('https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js');
+                }
+            }
+        }, true);
+        
+        function loadScript(url) {
+            const script = document.createElement('script');
+            script.src = url;
+            document.head.appendChild(script);
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧：录入面板 -->
+        <div class="input-panel">
+            <h1>📜 中华圣学《心安工程》日报填写</h1>
+            
+            <!-- 基本信息 -->
+            <section class="module">
+                <h2>一、基本信息</h2>
+                <div class="dual-input">
+                    <label>日期：</label>
+                    <input type="text" id="date" readonly>
+                    <button class="voice-btn" onclick="startVoice('date')">🎤</button>
+                </div>
+                <div class="dual-input">
+                    <label>星期：</label>
+                    <input type="text" id="weekday" readonly>
+                    <button class="voice-btn" onclick="startVoice('weekday')">🎤</button>
+                </div>
+                <div class="dual-input">
+                    <label>日报编号：</label>
+                    <input type="text" id="report_id" readonly>
+                    <button class="voice-btn" onclick="startVoice('report_id')">🎤</button>
+                </div>
+                <div class="dual-input">
+                    <label>核心修习方向：</label>
+                    <select id="core_direction" multiple>
+                        <option value="心传">《中华圣学心传》</option>
+                        <option value="心践">《中华圣学心践论》</option>
+                        <option value="五维">《道德经五维生命智慧体系》</option>
+                    </select>
+                </div>
+                <div class="dual-input">
+                    <label>天气/环境：</label>
+                    <input type="text" id="weather" placeholder="如：阴/居家修习">
+                    <button class="voice-btn" onclick="startVoice('weather')">🎤</button>
+                </div>
+            </section>
+
+            <!-- 模块1：心传体悟 -->
+            <section class="module">
+                <h2>二、《中华圣学心传》先天智慧体悟</h2>
+                <div class="dual-input">
+                    <label>今日箴言：</label>
+                    <textarea id="xinchuan_proverb" placeholder="本心流露/原文摘录"></textarea>
+                    <button class="voice-btn" onclick="startVoice('xinchuan_proverb')">🎤</button>
+                </div>
+                <div class="dual-input">
+                    <label>日常应用场景：</label>
+                    <textarea id="xinchuan_scene" placeholder="如：工作冲突时，践行'不争'箴言"></textarea>
+                    <button class="voice-btn" onclick="startVoice('xinchuan_scene')">🎤</button>
+                </div>
+                <div class="dual-input">
+                    <label>八维定位：</label>
+                    <select id="xinchuan_eight">
+                        <option value="">请选择</option>
+                        <option value="道维-破妄见真">道维-破妄见真</option>
+                        <option value="德维-积德显真">德维-积德显真</option>
+                        <option value="仁维-仁爱显真">仁维-仁爱显真</option>
+                        <option value="义维-义行守真">义维-义行守真</option>
+                        <option value="礼维-礼序安真">礼维-礼序安真</option>
+                        <option value="智维-明智辨真">智维-明智辨真</option>
+                        <option value="信维-诚信归真">信维-诚信归真</option>
+                        <option value="融维-圆融通真">融维-圆融通真</option>
+                    </select>
+                </div>
+                <div class="dual-input">
+                    <label>六序进度：</label>
+                    <select id="xinchuan_six" multiple>
+                        <option value="惊觉">惊觉</option>
+                        <option value="领悟">领悟</option>
+                        <option value="透视">透视</option>
+                        <option value="认取">认取</option>
+                        <option value="担当">担当</option>
+                        <option value="践行">践行</option>
+                    </select>
+                </div>
+                <div class="dual-input">
+                    <label>能量感知（1-10分）：</label>
+                    <input type="number" id="xinchuan_energy" min="1" max="10">
+                    <button class="voice-btn" onclick="startVoice('xinchuan_energy')">🎤</button>
+                </div>
+                <div class="dual-input">
+                    <label>妄念类型：</label>
+                    <select id="xinchuan_wangnian">
+                        <option value="">请选择</option>
+                        <option value="求认可">求认可</option>
+                        <option value="贪速成">贪速成</option>
+                        <option value="攀比心">攀比心</option>
+                        <option value="嗔怒心">嗔怒心</option>
+                        <option value="懈怠心">懈怠心</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="dual-input">
+                    <label>格除次数：</label>
+                    <input type="number" id="xinchuan_count" min="0">
+                    <button class="voice-btn" onclick="startVoice('xinchuan_count')">🎤</button>
+                </div>
+            </section>
+
+            <!-- 模块2：十目践行 -->
+            <section class="module">
+                <h2>三、《中华圣学心践论》十目践行记录</h2>
+                <div class="ten-items-grid">
+                    <div class="item-cell">
+                        <label>格念</label>
+                        <select id="xinjian_1"><option value="未践行">未践行</option><option value="践行">践行</option></select>
+                    </div>
+                    <div class="item-cell">
+                        <label>正心</label>
+                        <select id="xinjian_2"><option value="未践行">未践行</option><option value="践行">践行</option></select>
+                    </div>
+                    <div class="item-cell">
+                        <label>修身</label>
+                        <select id="xinjian_3"><option value="未践行">未践行</option><option value="践行">践行</option></select>
+                    </div>
+                    <div class="item-cell">
+                        <label>处事</label>
+                        <select id="xinjian_4"><option value="未践行">未践行</option><option value="践行">践行</option></select>
+                    </div>
+                    <div class="item-cell">
+                        <label>接物</label>
+                        <select id="xinjian_5"><option value="未践行">未践行</option><option value="践行">践行</option></select>
+                    </div>
+                    <div class="item-cell">
+                        <label>齐家</label>
+                        <select id="xinjian_6"><option value="未践行">未践行</option><option value="践行">践行</option></select>
+                    </div>
+                    <div class="item-cell">
+                        <label>济世</label>
+                        <select id="xinjian_7"><option value="未践行">未践行</option><option value="践行">践行</option></select>
+                    </div>
+                    <div class="item-cell">
+                        <label>一贯</label>
+                        <select id="xinjian_8"><option value="未践行">未践行</option><option value="践行">践行</option></select>
+                    </div>
+                    <div class="item-cell">
+                        <label>成性</label>
+                        <select id="xinjian_9"><option value="未践行">未践行</option><option value="践行">践行</option></select>
+                    </div>
+                    <div class="item-cell">
+                        <label>化民</label>
+                        <select id="xinjian_10"><option value="未践行">未践行</option><option value="践行">践行</option></select>
+                    </div>
+                </div>
+                <div class="dual-input">
+                    <label>焊缝能量密度（1-10分）：</label>
+                    <input type="number" id="xinjian_density" min="1" max="10">
+                    <button class="voice-btn" onclick="startVoice('xinjian_density')">🎤</button>
+                </div>
+            </section>
+
+            <!-- 模块3：五维量化 -->
+            <section class="module">
+                <h2>四、《道德经五维生命智慧》量化记录</h2>
+                <div class="five-dim-grid">
+                    <div class="dim-cell">
+                        <label>治神时长（分钟）</label>
+                        <input type="number" id="wudao_1" min="0">
+                        <button class="voice-btn" onclick="startVoice('wudao_1')">🎤</button>
+                    </div>
+                    <div class="dim-cell">
+                        <label>HRV（ms²）</label>
+                        <input type="number" id="wudao_hrv" min="0">
+                        <button class="voice-btn" onclick="startVoice('wudao_hrv')">🎤</button>
+                    </div>
+                    <div class="dim-cell">
+                        <label>神聚度（1-10分）</label>
+                        <input type="number" id="wudao_2" min="1" max="10">
+                        <button class="voice-btn" onclick="startVoice('wudao_2')">🎤</button>
+                    </div>
+                    <div class="dim-cell">
+                        <label>情绪稳定度（1-10分）</label>
+                        <input type="number" id="wudao_3" min="1" max="10">
+                        <button class="voice-btn" onclick="startVoice('wudao_3')">🎤</button>
+                    </div>
+                    <div class="dim-cell">
+                        <label>睡眠时长（小时）</label>
+                        <input type="number" id="wudao_4" min="0" step="0.1">
+                        <button class="voice-btn" onclick="startVoice('wudao_4')">🎤</button>
+                    </div>
+                    <div class="dim-cell">
+                        <label>互动满意度（1-10分）</label>
+                        <input type="number" id="wudao_5" min="1" max="10">
+                        <button class="voice-btn" onclick="startVoice('wudao_5')">🎤</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 模块4：总结与规划 -->
+            <section class="module">
+                <h2>五、总结与明日规划</h2>
+                <div class="dual-input">
+                    <label>今日核心感悟：</label>
+                    <textarea id="summary_feeling" placeholder="元认知反思"></textarea>
+                    <button class="voice-btn" onclick="startVoice('summary_feeling')">🎤</button>
+                </div>
+                <div class="dual-input">
+                    <label>数据亮点：</label>
+                    <input type="text" id="summary_highlight" placeholder="如：连续7天达标">
+                    <button class="voice-btn" onclick="startVoice('summary_highlight')">🎤</button>
+                </div>
+                <div class="dual-input">
+                    <label>明日重点-心传：</label>
+                    <select id="plan_xinchuan">
+                        <option value="">请选择</option>
+                        <option value="道维-破妄">道维-破妄见真</option>
+                        <option value="德维-积德">德维-积德显真</option>
+                        <option value="仁维-仁爱">仁维-仁爱显真</option>
+                        <option value="义维-中正">义维-义行守真</option>
+                    </select>
+                </div>
+                <div class="dual-input">
+                    <label>明日重点-心践：</label>
+                    <select id="plan_xinjian">
+                        <option value="">请选择</option>
+                        <option value="格念">格念</option>
+                        <option value="正心">正心</option>
+                        <option value="修身">修身</option>
+                        <option value="处事">处事</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- 操作按钮 -->
+            <div class="action-bar">
+                <button class="btn primary" onclick="saveReport()">💾 保存并生成日报</button>
+                <button class="btn" onclick="exportPDF()">📄 导出PDF</button>
+                <button class="btn" onclick="exportPNG()">🖼️ 导出图片</button>
+                <button class="btn" onclick="saveDraft()">📝 保存草稿</button>
+            </div>
+        </div>
+
+        <!-- 预览面板 -->
+        <div class="preview-panel">
+            <h2>📊 实时预览（自动生成）</h2>
+            <div id="live_preview"></div>
+        </div>
+    </div>
+
+    <script src="js/recognition.js"></script>
+    <script src="js/reportGenerator.js"></script>
+    <script src="js/guidanceEngine.js"></script>
+</body>
+</html>
