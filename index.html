@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心安工程日报系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        /* 你的原有样式保持不变 */
+        body { font-family: "微软雅黑", sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
+        .form-group { margin: 15px 0; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+        input, select, textarea { width: 100%; padding: 12px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        textarea { height: 80px; resize: vertical; }
+        .table-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 20px 0; }
+        .btn { background: #4CAF50; color: white; border: none; padding: 12px 24px; cursor: pointer; border-radius: 8px; font-size: 16px; margin: 5px; }
+        .btn:hover { background: #45a049; }
+        .voice-btn { background: #ff9800; padding: 8px 12px; font-size: 12px; }
+        .voice-btn.recording { background: #f44336; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        #report_output { display: none; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .module { margin: 20px 0; padding: 15px; border-left: 4px solid #4CAF50; background: #f8f9fa; }
+        .module h3 { margin-top: 0; color: #2c3e50; }
+        .sync-status { position: fixed; top: 10px; right: 10px; padding: 8px 16px; background: #2196F3; color: white; border-radius: 20px; display: none; }
+    </style>
+</head>
+<body>
+    <h1>中华圣学修身《心安工程》日报系统</h1>
+    
+    <!-- 基本信息 -->
+    <h2>一、基本信息</h2>
+    <div class="form-group">
+        <label>日期（自动生成）：</label>
+        <input type="text" id="date" readonly>
+        <button class="btn voice-btn" onclick="startVoiceInput('date')">🎤 语音</button>
+    </div>
+    <!-- 其他字段保持你的原结构，每个输入框后加语音按钮 -->
+
+    <!-- 提交区域 -->
+    <div style="text-align: center; margin: 30px 0;">
+        <button class="btn" onclick="saveAndGenerate()">保存并生成日报</button>
+        <button class="btn" onclick="syncToGitHub()">同步到云端</button>
+        <button class="btn" onclick="exportAsImage()">导出为图片</button>
+    </div>
+
+    <!-- 生成的日报展示区域 -->
+    <div id="report_output"></div>
+
+    <!-- 同步状态提示 -->
+    <div class="sync-status" id="sync_status"></div>
+
+    <script>
+        // ==================== 1. 自动填充基础信息 ====================
+        function initBasicInfo() {
+            const today = new Date();
+            const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            const weekdayStr = ['日','一','二','三','四','五','六'][today.getDay()];
+            document.getElementById('date').value = dateStr;
+            document.getElementById('weekday').value = `星期${weekdayStr}`;
+            
+            // 从本地存储读取历史数据，自动生成编号
+            const reports = JSON.parse(localStorage.getItem('xinan_reports') || '[]');
+            const nextId = String(reports.length + 1).padStart(3, '0');
+            document.getElementById('report_id').value = `00${nextId}`;
+        }
+
+        // ==================== 2. 语音输入核心功能 ====================
+        let recognition = null;
+        let currentVoiceField = null;
+        
+        // 初始化语音识别（浏览器原生API，完全免费）
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = 'zh-CN';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                if (currentVoiceField) {
+                    // 智能处理：如果是数字字段，自动提取数字
+                    if (currentVoiceField.type === 'number') {
+                        const numbers = transcript.match(/\d+/g);
+                        if (numbers) currentVoiceField.value = numbers[0];
+                    } else {
+                        currentVoiceField.value += transcript;
+                    }
+                }
+                stopRecording();
+            };
+            
+            recognition.onerror = () => {
+                alert('语音识别出错，请重试');
+                stopRecording();
+            };
+        }
+        
+        function startVoiceInput(fieldId) {
+            if (!recognition) {
+                alert('您的浏览器不支持语音识别，请使用Chrome/Edge');
+                return;
+            }
+            
+            currentVoiceField = document.getElementById(fieldId);
+            const btn = event.target;
+            btn.classList.add('recording');
+            btn.textContent = '🔴 录音中...';
+            
+            recognition.start();
+        }
+        
+        function stopRecording() {
+            const btn = document.querySelector('.recording');
+            if (btn) {
+                btn.classList.remove('recording');
+                btn.textContent = '🎤 语音';
+            }
+            if (recognition) recognition.stop();
+        }
+
+        // ==================== 3. 数据保存到本地浏览器存储 ====================
+        function collectFormData() {
+            const data = {
+                日期: document.getElementById('date').value,
+                星期: document.getElementById('weekday').value,
+                日报编号: document.getElementById('report_id').value,
+                // ... 其他所有字段
+                心传箴言: document.getElementById('xinchuan_proverb').value,
+                心传能量: document.getElementById('xinchuan_energy').value,
+                // 十目数据
+                十目践行: CONFIG.ten_items.map(item => ({
+                    项目: item,
+                    状态: document.getElementById(`xinjian_${CONFIG.ten_items.indexOf(item)+1}`).value,
+                    分数: document.getElementById('xinjian_density').value
+                })),
+                // 五维数据
+                五维数据: {
+                    治神时长: document.getElementById('wudao_1').value,
+                    HRV: document.getElementById('wudao_hrv').value,
+                    神聚度: document.getElementById('wudao_2').value,
+                    情绪稳定度: document.getElementById('wudao_3').value,
+                    睡眠时长: document.getElementById('wudao_4').value,
+                    互动满意度: document.getElementById('wudao_5').value
+                },
+                今日感悟: document.getElementById('summary_feeling').value,
+                生成时间: new Date().toISOString()
+            };
+            return data;
+        }
+        
+        function saveAndGenerate() {
+            const data = collectFormData();
+            
+            // 保存到浏览器本地存储
+            const reports = JSON.parse(localStorage.getItem('xinan_reports') || '[]');
+            reports.push(data);
+            localStorage.setItem('xinan_reports', JSON.stringify(reports));
+            
+            // 生成日报HTML
+            generateReportHTML(data);
+            
+            alert('日报已保存并生成！');
+        }
+
+        // ==================== 4. 生成可分享的日报HTML ====================
+        function generateReportHTML(data) {
+            const tenItemsHtml = data.十目践行.map(item => 
+                `<tr><td>${item.项目}</td><td>${item.状态}</td><td>${item.分数}分</td></tr>`
+            ).join('');
+            
+            const reportHtml = `
+                <div class="module">
+                    <h3>📅 ${data.日期} ${data.星期} | 编号：${data.日报编号}</h3>
+                    <p><strong>核心方向：</strong>${data.核心修习方向 || '无'} | <strong>天气：</strong>${data.天气 || '无'}</p>
+                </div>
+                
+                <div class="module">
+                    <h3>一、《心传》体悟</h3>
+                    <p><strong>箴言：</strong>${data.心传箴言 || '未填写'}</p>
+                    <p><strong>能量感知：</strong>${data.心传能量 || '无'}分</p>
+                </div>
+                
+                <div class="module">
+                    <h3>二、《心践》十目</h3>
+                    <table style="width:100%; border-collapse: collapse;">
+                        <tr style="background: #f5f5f5;"><th>项目</th><th>状态</th><th>分数</th></tr>
+                        ${tenItemsHtml}
+                    </table>
+                </div>
+                
+                <div class="module">
+                    <h3>三、《五维》量化</h3>
+                    <p><strong>治神：</strong>${data.五维数据.治神时长}分钟 | HRV: ${data.五维数据.HRV} | 神聚度: ${data.五维数据.神聚度}分</p>
+                    <p><strong>治心：</strong>情绪稳定度${data.五维数据.情绪稳定度}分</p>
+                    <p><strong>治身：</strong>睡眠${data.五维数据.睡眠时长}小时</p>
+                    <p><strong>治世：</strong>互动满意度${data.五维数据.互动满意度}分</p>
+                </div>
+                
+                <div class="module">
+                    <h3>四、核心感悟</h3>
+                    <p>${data.今日感悟 || '未填写'}</p>
+                </div>
+            `;
+            
+            document.getElementById('report_output').innerHTML = reportHtml;
+            document.getElementById('report_output').style.display = 'block';
+        }
+
+        // ==================== 5. 导出为图片（用于分享） ====================
+        function exportAsImage() {
+            const reportDiv = document.getElementById('report_output');
+            if (!reportDiv.innerHTML) {
+                alert('请先保存并生成日报');
+                return;
+            }
+            
+            html2canvas(reportDiv, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                useCORS: true
+            }).then(canvas => {
+                // 下载图片
+                const link = document.createElement('a');
+                link.download = `心安日报_${document.getElementById('date').value}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                
+                // 自动复制到剪贴板（可选）
+                canvas.toBlob(blob => {
+                    navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]).then(() => {
+                        alert('图片已生成并复制到剪贴板，可直接粘贴到微信/朋友圈！');
+                    });
+                });
+            });
+        }
+
+        // ==================== 6. 同步到GitHub（免费云端存储） ====================
+        const GITHUB_CONFIG = {
+            owner: '你的GitHub用户名',  // 用户需要修改这里
+            repo: 'xinan-daily-reports',
+            token: '你的GitHub令牌'  // 在GitHub Settings → Developer settings → Personal access tokens生成
+        };
+        
+        async function syncToGitHub() {
+            const reports = JSON.parse(localStorage.getItem('xinan_reports') || '[]');
+            if (reports.length === 0) {
+                alert('没有数据需要同步');
+                return;
+            }
+            
+            showSyncStatus('正在同步到云端...');
+            
+            try {
+                const dateStr = new Date().toISOString().split('T')[0];
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(reports, null, 2))));
+                
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/data/${dateStr}.json`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `同步日报数据 - ${dateStr}`,
+                        content: content
+                    })
+                });
+                
+                if (response.ok) {
+                    showSyncStatus('同步成功！', 'success');
+                    // 生成可分享的链接
+                    const shareUrl = `https://${GITHUB_CONFIG.owner}.github.io/${GITHUB_CONFIG.repo}/view.html?date=${dateStr}`;
+                    alert(`同步完成！可分享此链接给他人查看（匿名）：\n${shareUrl}`);
+                } else {
+                    throw new Error('同步失败');
+                }
+            } catch (error) {
+                showSyncStatus('同步失败，稍后重试', 'error');
+                console.error(error);
+            }
+        }
+        
+        function showSyncStatus(message, type = 'normal') {
+            const status = document.getElementById('sync_status');
+            status.textContent = message;
+            status.style.display = 'block';
+            status.style.background = type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // ==================== 7. 页面加载时初始化 ====================
+        window.onload = function() {
+            initBasicInfo();
+            
+            // 检查是否有未同步的数据
+            const reports = JSON.parse(localStorage.getItem('xinan_reports') || '[]');
+            if (reports.length > 0) {
+                const lastReport = reports[reports.length - 1];
+                const lastDate = new Date(lastReport.日期);
+                const today = new Date();
+                if (lastDate.toDateString() === today.toDateString()) {
+                    generateReportHTML(lastReport); // 自动显示今天的日报
+                }
+            }
+        };
+    </script>
+</body>
+</html>
