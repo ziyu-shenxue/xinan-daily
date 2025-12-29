@@ -1,7 +1,6 @@
 // 日报生成与导出核心模块
 let reportData = {};
 
-// 自动初始化
 window.onload = function() {
     initBasicInfo();
     loadDraft();
@@ -16,7 +15,6 @@ function initBasicInfo() {
     document.getElementById('date').value = dateStr;
     document.getElementById('weekday').value = `星期${weekdayStr}`;
     
-    // 生成编号
     const reports = JSON.parse(localStorage.getItem('xinan_reports') || '[]');
     const nextId = String(reports.length + 1).padStart(3, '0');
     document.getElementById('report_id').value = `00${nextId}`;
@@ -45,7 +43,6 @@ function collectFormData() {
         生成时间: new Date().toISOString()
     };
 
-    // 收集十目数据
     CONFIG.ten_items.forEach((item, i) => {
         data.十目践行[item] = document.getElementById(`xinjian_${i+1}`).value;
     });
@@ -87,6 +84,7 @@ function generateLivePreview() {
                 <h3>三、《五维》量化</h3>
                 <p>治神时长：${data.五维数据.治神时长}分钟 | HRV：${data.五维数据.HRV}</p>
                 <p>神聚度：${data.五维数据.神聚度}分 | 情绪稳定度：${data.五维数据.情绪稳定度}分</p>
+                <p>睡眠：${data.五维数据.睡眠时长}小时 | 互动满意度：${data.五维数据.互动满意度}分</p>
             </div>
             
             <div class="section">
@@ -98,7 +96,6 @@ function generateLivePreview() {
     document.getElementById('live_preview').innerHTML = html;
 }
 
-// 实时监听所有输入
 document.querySelectorAll('input, textarea, select').forEach(el => {
     el.addEventListener('input', generateLivePreview);
 });
@@ -106,33 +103,57 @@ document.querySelectorAll('input, textarea, select').forEach(el => {
 function saveReport() {
     const data = collectFormData();
     
-    // 保存到本地存储
-    const reports = JSON.parse(localStorage.getItem('xinan_reports') || '[]');
-    reports.push(data);
-    localStorage.setItem('xinan_reports', JSON.stringify(reports));
+    try {
+        const reports = JSON.parse(localStorage.getItem('xinan_reports') || '[]');
+        reports.push(data);
+        localStorage.setItem('xinan_reports', JSON.stringify(reports));
+    } catch (e) {
+        console.warn('localStorage失败:', e);
+    }
     
-    // 生成可下载的JSON
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `日报_${data.日期}.json`;
-    a.click();
-    
-    alert('✅ 日报已保存！');
+    try {
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `日报_${data.日期}.json`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        if (/MicroMessenger/i.test(navigator.userAgent)) {
+            alert('✅ 日报已生成！\n文件已下载到手机\n请在"文件管理"中查找');
+        } else {
+            alert('✅ 日报已保存！');
+        }
+        
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        alert('保存失败: ' + e.message);
+    }
 }
 
 function saveDraft() {
     const data = collectFormData();
-    localStorage.setItem('xinan_draft', JSON.stringify(data));
-    alert('💾 草稿已保存（刷新后自动恢复）');
+    
+    try {
+        localStorage.setItem('xinan_draft', JSON.stringify(data));
+        alert('💾 草稿已保存（刷新后自动恢复）');
+    } catch (e) {
+        try {
+            sessionStorage.setItem('xinan_draft', JSON.stringify(data));
+            alert('💾 草稿已保存（仅当前会话有效）');
+        } catch (e2) {
+            alert('⚠️ 草稿保存失败，请手动复制内容');
+        }
+    }
 }
 
 function loadDraft() {
     const draft = localStorage.getItem('xinan_draft');
     if (draft) {
         const data = JSON.parse(draft);
-        // 恢复表单数据
         Object.keys(data).forEach(key => {
             const el = document.getElementById(key);
             if (el && data[key]) {
@@ -144,7 +165,7 @@ function loadDraft() {
 }
 
 function startAutoSave() {
-    setInterval(saveDraft, 30000); // 每30秒自动保存草稿
+    setInterval(saveDraft, 30000);
 }
 
 async function exportPDF() {
@@ -154,16 +175,28 @@ async function exportPDF() {
         return;
     }
     
-    const canvas = await html2canvas(element, {scale: 2});
-    const imgData = canvas.toDataURL('image/png');
+    if (typeof html2canvas === 'undefined') {
+        alert('报告生成库加载失败，请刷新页面重试');
+        return;
+    }
     
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgWidth = 190;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    
-    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-    pdf.save(`心安日报_${collectFormData().日期}.pdf`);
+    try {
+        const canvas = await html2canvas(element, {scale: 2});
+        const imgData = canvas.toDataURL('image/png');
+        
+        if (typeof window.jspdf !== 'undefined') {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 190;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+            pdf.save(`心安日报_${collectFormData().日期}.pdf`);
+        } else {
+            downloadImage(imgData, `心安日报_${collectFormData().日期}.png`);
+        }
+    } catch (e) {
+        alert('PDF生成失败: ' + e.message);
+    }
 }
 
 async function exportPNG() {
@@ -173,14 +206,27 @@ async function exportPNG() {
         return;
     }
     
-    const canvas = await html2canvas(element, {scale: 2});
+    if (typeof html2canvas === 'undefined') {
+        alert('图片生成库加载失败，请刷新页面重试');
+        return;
+    }
+    
+    try {
+        const canvas = await html2canvas(element, {scale: 2});
+        const imgData = canvas.toDataURL('image/png');
+        downloadImage(imgData, `心安日报_${collectFormData().日期}.png`);
+    } catch (e) {
+        alert('图片生成失败: ' + e.message);
+    }
+}
+
+function downloadImage(dataUrl, filename) {
     const link = document.createElement('a');
-    link.download = `心安日报_${collectFormData().日期}.png`;
-    link.href = canvas.toDataURL();
+    link.download = filename;
+    link.href = dataUrl;
     link.click();
 }
 
-// 配置文件
 const CONFIG = {
     ten_items: ["格念", "正心", "修身", "处事", "接物", "齐家", "济世", "一贯", "成性", "化民"]
 };
