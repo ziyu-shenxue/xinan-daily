@@ -4,20 +4,21 @@
     <meta charset="UTF-8">
     <title>语音功能测试工具</title>
 </head>
-<body style="font-family: Arial; padding: 20px;">
+<body style="font-family: Arial; padding: 20px; max-width: 600px; margin: 0 auto;">
     <h1>🎤 语音功能测试</h1>
     <p>点击按钮后说话，测试浏览器是否支持语音识别</p>
     
-    <button onclick="testVoice()" style="padding: 20px; font-size: 18px;">开始测试</button>
+    <button onclick="testVoice()" style="padding: 20px; font-size: 18px; background: #4CAF50; color: white; border: none; border-radius: 4px;">开始测试</button>
     
-    <div id="result" style="margin-top: 20px; padding: 15px; background: #f0f0f0;"></div>
+    <div id="result" style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 4px; min-height: 100px;"></div>
 
     <script>
         function testVoice() {
             if (!('webkitSpeechRecognition' in window)) {
                 document.getElementById('result').innerHTML = 
                     '<span style="color:red;">❌ 浏览器不支持语音识别</span><br>' +
-                    '请使用：Chrome、Edge、Safari';
+                    '请使用：Chrome、Edge、Safari<br>' +
+                    '微信用户请点击右上角"..." → "在浏览器打开"';
                 return;
             }
             
@@ -30,15 +31,23 @@
             
             recognition.onresult = (e) => {
                 const transcript = e.results[0][0].transcript;
+                const confidence = e.results[0][0].confidence;
                 document.getElementById('result').innerHTML = 
                     '<span style="color:green;">✅ 识别成功！</span><br>' +
                     '<strong>内容：</strong>' + transcript + '<br>' +
-                    '<strong>置信度：</strong>' + (e.results[0][0].confidence * 100).toFixed(2) + '%';
+                    '<strong>置信度：</strong>' + (confidence * 100).toFixed(2) + '%';
             };
             
             recognition.onerror = (e) => {
+                let errorMsg = '';
+                switch(e.error) {
+                    case 'no-speech': errorMsg = '未检测到语音'; break;
+                    case 'audio-capture': errorMsg = '无法访问麦克风'; break;
+                    case 'not-allowed': errorMsg = '麦克风权限被拒绝'; break;
+                    default: errorMsg = e.error;
+                }
                 document.getElementById('result').innerHTML = 
-                    '<span style="color:red;">❌ 错误：</span>' + e.error;
+                    '<span style="color:red;">❌ 错误：</span>' + errorMsg;
             };
             
             recognition.start();
