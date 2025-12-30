@@ -1,0 +1,617 @@
+/**
+ * 全局样式文件（v1.0）
+ * 核心规范：遵循主色#2E7D32、辅助色#81C784、强调色#D32F2F的视觉体系
+ * 适配范围：覆盖所有页面组件（红框核心组件、表单控件、预览区、操作按钮），兼容Chrome/Edge浏览器
+ * 响应式适配：支持桌面端（默认）、平板端、移动端，确保红框组件在不同分辨率下正常显示
+ */
+
+/* ================================= 全局重置与基础样式 ================================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "微软雅黑", "思源黑体", "Arial", sans-serif;
+}
+
+body {
+  background-color: #F5F5F5;
+  color: #333333;
+  line-height: 1.6;
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* 标题层级样式 */
+h1 {
+  font-size: 20px;
+  color: #2E7D32;
+  text-align: center;
+  margin: 0 0 30px 0;
+  font-weight: bold;
+}
+
+h2 {
+  font-size: 16px;
+  color: #2E7D32;
+  margin: 0 0 15px 0;
+  font-weight: bold;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+/* 标签基础样式 */
+label {
+  font-size: 14px;
+  color: #333333;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+label.required::after {
+  content: "*";
+  color: #D32F2F;
+  margin-left: 3px;
+}
+
+/* 提示文本样式 */
+.form-hint {
+  font-size: 12px;
+  color: #666666;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.form-hint.emphasis {
+  color: #2E7D32;
+  font-weight: 500;
+}
+
+/* ================================= 布局容器样式 ================================= */
+/* 顶部导航区 */
+.header-nav {
+  background-color: #FFFFFF;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 25px;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+/* 主体内容区（双列布局：填写区+预览区） */
+.main-container {
+  display: flex;
+  gap: 25px;
+  margin-bottom: 30px;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto 30px;
+}
+/* 填写区容器 */
+.form-container {
+  flex: 1;
+  background-color: #FFFFFF;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  opacity: 1 !important;
+  width: 100% !important;
+}
+/* 预览区容器 */
+.preview-container {
+  width: 350px;
+  background-color: #FFFFFF;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  display: block !important;
+}
+#live_preview {
+  width: 100%;
+  min-height: 300px;
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 4px;
+}
+/* 模块容器样式 */
+.module-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  border-radius: 6px;
+  background-color: #FAFAFA;
+  border-left: 3px solid #2E7D32;
+  display: block !important;
+}
+.module-section.collapsed {
+  display: none;
+}
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.module-complete {
+  color: #2E7D32;
+  font-weight: bold;
+}
+
+/* 底部操作区 */
+.footer-actions {
+  background-color: #FFFFFF;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  position: sticky;
+  bottom: 0;
+  z-index: 998;
+}
+
+/* ================================= 表单控件样式 ================================= */
+/* 输入框/文本域基础样式 */
+.input-field, textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #CCCCCC;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333333;
+  transition: border-color 0.3s ease;
+}
+
+.input-field:focus, textarea:focus {
+  outline: none;
+  border-color: #2E7D32;
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.1);
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* 只读输入框样式 */
+.input-field[readonly] {
+  background-color: #F5F5F5;
+  cursor: default;
+  border-color: #E0E0E0;
+}
+
+/* 数字输入框（范围值专用） */
+.range-value {
+  width: 80px;
+  text-align: center;
+}
+
+/* 下拉框样式 */
+select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #CCCCCC;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333333;
+  background-color: #FFFFFF;
+  transition: border-color 0.3s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+
+select:focus {
+  outline: none;
+  border-color: #2E7D32;
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.1);
+}
+
+/* 滑块容器样式 */
+.range-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+}
+
+/* 滑块样式优化 */
+.range-field {
+  flex: 1;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #E0E0E0;
+  border-radius: 4px;
+  outline: none;
+  position: relative;
+}
+
+/* 滑块轨道选中部分样式 */
+.range-field::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #81C784 var(--value, 50%), #E0E0E0 0);
+}
+
+.range-field::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #81C784 var(--value, 50%), #E0E0E0 0);
+}
+
+/* 滑块按钮样式 */
+.range-field::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2E7D32;
+  cursor: pointer;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: background 0.3s ease;
+}
+
+.range-field::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2E7D32;
+  cursor: pointer;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: background 0.3s ease;
+}
+
+.range-field::-webkit-slider-thumb:hover {
+  background: #1B5E20;
+}
+
+.range-field::-moz-range-thumb:hover {
+  background: #1B5E20;
+}
+
+/* 单选按钮样式 */
+.radio-group {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+input[type="radio"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #CCCCCC;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.3s ease;
+}
+
+input[type="radio"]:checked {
+  border-color: #2E7D32;
+}
+
+input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2E7D32;
+}
+
+/* 搜索选择容器（五维章节搜索专用） */
+.search-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.search-input {
+  padding-right: 40px;
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #FFFFFF;
+  border: 1px solid #CCCCCC;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 999;
+  display: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-results.visible {
+  display: block;
+}
+
+.search-result-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 13px;
+}
+
+.search-result-item:hover {
+  background-color: #F5F5F5;
+  color: #2E7D32;
+}
+
+/* 十目践行网格布局 */
+.ten-items-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.ten-item-container {
+  background-color: #FFFFFF;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #E0E0E0;
+}
+
+.remark-input {
+  margin-top: 8px;
+  display: none;
+}
+
+.remark-input.visible {
+  display: block;
+}
+
+/* 标签样式（核心修习方向、六序进度） */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 8px 0 15px 0;
+}
+
+.tag {
+  background-color: #81C784;
+  color: #FFFFFF;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.tag.xinchuan {
+  background-color: #2E7D32;
+}
+
+.tag.xinjian {
+  background-color: #81C784;
+}
+
+.tag.wuwei {
+  background-color: #00695C;
+}
+
+/* 语音按钮样式 */
+.voice-btn {
+  background-color: transparent;
+  border: none;
+  color: #2E7D32;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.voice-btn:hover {
+  background-color: rgba(46, 125, 50, 0.1);
+}
+
+.voice-btn.recording {
+  color: #D32F2F;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* ================================= 按钮样式 ================================= */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background-color: #2E7D32;
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background-color: #1B5E20;
+}
+
+.btn-primary:active {
+  background-color: #004D40;
+}
+
+.btn-secondary {
+  background-color: #FFFFFF;
+  color: #2E7D32;
+  border: 1px solid #2E7D32;
+}
+
+.btn-secondary:hover {
+  background-color: #F5F5F5;
+}
+
+.btn-danger {
+  background-color: #D32F2F;
+  color: #FFFFFF;
+}
+
+.btn-danger:hover {
+  background-color: #B71C1C;
+}
+
+/* ================================= 红框核心组件样式 ================================= */
+.core-component {
+  position: relative;
+}
+
+.core-component::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 1px solid #2E7D32;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow: 0 0 0 1px rgba(46, 125, 50, 0.2);
+}
+
+/* 重点字段标红样式（五维章节关联后） */
+.core-component.key-field {
+  border-color: #2E7D32 !important;
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.1) !important;
+}
+
+/* ================================= 响应式适配样式 ================================= */
+/* 平板端（768px-1200px） */
+@media (max-width: 1200px) {
+  .main-container {
+    flex-direction: column;
+  }
+
+  .preview-container {
+    width: 100%;
+    max-height: none;
+    position: static;
+  }
+
+  .ten-items-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 移动端（≤768px） */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  .module-section {
+    padding: 10px;
+  }
+
+  .form-container {
+    padding: 15px;
+  }
+
+  .nav-buttons, .footer-actions {
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+
+  .range-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .range-value {
+    width: 100%;
+  }
+
+  .radio-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* ================================= 特殊组件样式 ================================= */
+/* 提示容器样式（语音提示、导出提示） */
+#voice-hint-container, #export-hint-container {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 4px;
+    background-color: #1976D2;
+  color: white;
+  font-size: 14px;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+  max-width: 80%;
+  text-align: center;
+}
+
+/* 加载动画样式 */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #FFFFFF;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
