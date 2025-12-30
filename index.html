@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中华圣学修身《心安工程》日报系统</title>
+    <style>
+        /* 全局样式（兼容V1 cssprint.css风格） */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", "思源黑体", sans-serif;
+        }
+        body {
+            background-color: #F5F5F5;
+            color: #333333;
+            padding: 0;
+            margin: 0;
+        }
+        /* 顶部导航区 */
+        .header-nav {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            padding: 15px 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .title-bar {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2E7D32;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .operation-btns {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .aux-funcs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        /* 核心组件样式（复用V1 core-component） */
+        .core-component {
+            border: 1px solid #CCCCCC;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .core-component:focus {
+            border-color: #2E7D32;
+        }
+        button.core-component {
+            background-color: #2E7D32;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        button.core-component:hover {
+            background-color: #1B5E20;
+        }
+        button.core-component:active {
+            background-color: #004D40;
+        }
+        /* 主体填写区 */
+        .main-form {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .form-module {
+            background-color: #fff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .module-title {
+            font-size: 16px;
+            font-weight: bold;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #E0E0E0;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .collapse-btn {
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .form-label.required::after {
+            content: "*";
+            color: #D32F2F;
+            margin-left: 4px;
+        }
+        .form-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .form-hint.emphasis {
+            color: #D32F2F;
+        }
+        /* 标签样式 */
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        .tag {
+            background-color: #81C784;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        /* 滑块样式 */
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="range"].core-component {
+            flex: 1;
+            height: 6px;
+            background-color: #E0E0E0;
+            appearance: none;
+            border-radius: 3px;
+        }
+        input[type="range"].core-component::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #2E7D32;
+            cursor: pointer;
+        }
+        input[type="range"].core-component::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #2E7D32;
+            cursor: pointer;
+            border: none;
+        }
+        /* 十目践行网格 */
+        .shimu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .shimu-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .shimu-radio {
+            display: flex;
+            gap: 8px;
+            margin: 4px 0;
+        }
+        .mini-input {
+            width: 100%;
+            margin-top: 4px;
+            padding: 4px;
+            font-size: 12px;
+        }
+        /* 右侧预览区 */
+        .preview-container {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 350px;
+            height: 100vh;
+            background-color: #fff;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 90;
+        }
+        .preview-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2E7D32;
+            text-align: center;
+        }
+        .preview-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .preview-module {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #E0E0E0;
+        }
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .preview-container {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+            .shimu-grid {
+                grid-template-columns: 1fr;
+            }
+            .operation-btns {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航区 -->
+    <div class="header-nav">
+        <div class="title-bar">中华圣学修身《心安工程》日报系统</div>
+        <div class="operation-btns">
+            <button class="core-component" id="save-draft">保存草稿</button>
+            <button class="core-component" id="preview-daily">预览日报</button>
+            <button class="core-component" id="export-pdf">导出PDF</button>
+            <button class="core-component" id="export-img">导出图片</button>
+            <button class="core-component" id="submit-sync">提交同步</button>
+        </div>
+        <div class="aux-funcs">
+            <button class="core-component voice-btn" id="voice-toggle">🎤 语音输入</button>
+            <button class="core-component" id="help-guide">❓ 帮助指南</button>
+            <button class="core-component" id="history-record">🕒 历史记录</button>
+        </div>
+    </div>
+
+    <!-- 主体填写区 -->
+    <div class="main-form">
+        <!-- 模块1：基础信息 -->
+        <div class="form-module" id="module-base">
+            <div class="module-title">
+                基础信息 <span class="required">(必填)</span>
+                <span class="collapse-btn" onclick="toggleModule('module-base-content')">折叠 ▲</span>
+            </div>
+            <div id="module-base-content">
+                <div class="form-group">
+                    <label class="form-label required" for="date">日期</label>
+                    <input type="text" class="core-component" id="date" readonly placeholder="YYYY-MM-DD">
+                </div>
+                <div class="form-group">
+                    <label class="form-label required" for="weekday">星期</label>
+                    <input type="text" class="core-component" id="weekday" readonly placeholder="星期一">
+                </div>
+                <div class="form-group">
+                    <label class="form-label required" for="report-id">日报编号</label>
+                    <input type="text" class="core-component" id="id="report_id" readonly placeholder="251229001">
+                </div>
+                <div class="form-group">
+                    <label class="form-label required" for="core-direction">核心修习方向</label>
+                    <select class="core-component" id="core_direction" multiple>
+                        <option value="圣学心传">圣学心传</option>
+                        <option value="圣学心践">圣学心践</option>
+                        <option value="道德经五维">道德经五维</option>
+                    </select>
+                    <div class="tag-container" id="direction-tags"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="weather">天气/环境备注</label>
+                    <input type="text" class="core-component" id="weather" placeholder="晴/阴/雨/雪 + 居家/书房/户外/办公，支持自定义">
+                    <div class="form-hint">预设选项：晴/阴/雨/雪 + 居家/书房/户外/办公</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模块2：《中华圣学心传》先天智慧体悟 -->
+        <div class="form-module" id="module-xinchuan">
+            <div class="module-title">
+                《中华圣学心传》先天智慧体悟
+                <span class="collapse-btn" onclick="toggleModule('module-xinchuan-content')">折叠 ▲</span>
+            </div>
+            <div id="module-xinchuan-content">
+                <div class="form-group">
+                    <label class="form-label" for="xinchuan_proverb">今日箴言</label>
+                    <div style="display: flex; gap: 8px;">
+                        <textarea class="input-field core-component" id="xinchuan_proverb" placeholder="本心流露或原文摘录（例：万物衍化本清静）" 
+                            autocomplete="off" rows="3" maxlength="200"></textarea>
+                        <button class="voice-btn core-component" onclick="startVoice('xinchuan_proverb')" id="voice-btn-proverb">
+                            🎤 <span class="voice-status">语音输入</span>
+                        </button>
+                    </div>
+                    <div id="preview-loading" style="display: none; color: #666;">预览更新中...</div>
+                    <p class="form-hint">支持手动输入/粘贴/语音转文字，建议引用典籍原文（最多200字）
+                        <span id="xinchuan_proverb-count">0/200</span>
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="xinchuan_scene">日常应用场景</label>
+                    <textarea class="input-field core-component" id="xinchuan_scene" placeholder="具体场景+践行动作（例：同事争执时，践行'不争'箴言，主动退让）"></textarea>
+                    <p class="form-hint emphasis">最少输入10字，描述箴言在实际生活中的应用过程</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="xinchuan_eight">八维定位（单选）</label>
+                    <select class="input-field core-component" id="xinchuan_eight">
+                        <option value="">请选择</option>
+                        <option value="道维-破妄见真">道维-破妄见真</option>
+                        <option value="德维-积德显真">德维-积德显真</option>
+                        <option value="仁维-仁爱显真">仁维-仁爱显真</option>
+                        <option value="义维-义行守真">义维-义行守真</option>
+                        <option value="礼维-礼序安真">礼维-礼序安真</option>
+                        <option value="智维-明智辨真">智维-明智辨真</option>
+                        <option value="信维-诚信归真">信维-诚信归真</option>
+                        <option value="融维-圆融通真">融维-圆融通真</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="xinchuan_six">六序进度（多选）</label>
+                    <select class="core-component" id="xinchuan_six" multiple>
+                        <option value="惊觉">惊觉</option>
+                        <option value="领悟">领悟</option>
+                        <option value="透视">透视</option>
+                        <option value="认取">认取</option>
+                        <option value="担当">担当</option>
+                        <option value="践行">践行</option>
+                    </select>
+                    <div class="tag-container" id="six-tags"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="xinchuan_energy">能量感知（1-10分）</label>
+                    <div class="slider-wrapper">
+                        <input type="range" class="core-component" id="xinchuan_energy" min="1" max="10" value="5">
+                        <span id="energy-value">5</span>
+                        <span id="energy-tip">状态中等</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="xinchuan_wangnian">妄念类型</label>
+                    <select class="core-component" id="xinchuan_wangnian" onchange="toggleWangnianOther()">
+                        <option value="">请选择</option>
+                        <option value="求认可">求认可</option>
+                        <option value="贪速成">贪速成</option>
+                        <option value="攀比心">攀比心</option>
+                        <option value="嗔怒心">嗔怒心</option>
+                        <option value="懈怠心">懈怠心</option>
+                        <option value="其他">其他</option>
+                    </select>
+                    <input type="text" class="core-component" id="xinchuan_wangnian_other" placeholder="请输入自定义妄念类型" style="display: none; margin-top: 8px;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="xinchuan_remove_count">格除次数</label>
+                    <input type="number" class="core-component" id="xinchuan_remove_count" min="0" max="99" value="0">
+                </div>
+            </div>
+        </div>
+
+        <!-- 模块3：《中华圣学心践论》十目践行记录 -->
+        <div class="form-module" id="module-xinjian">
+            <div class="module-title">
+                《中华圣学心践论》十目践行记录（核心模块）
+                <span class="collapse-btn" onclick="toggleModule('module-xinjian-content')">折叠 ▲</span>
+            </div>
+            <div id="module-xinjian-content">
+                <div class="shimu-grid">
+                    <!-- 十目践行项 -->
+                    <div class="shimu-item">
+                        <label class="form-label">1. 格念</label>
+                        <div class="shimu-radio">
+                            <label><input type="radio" name="shimu_gn" value="践行"> 践行</label>
+                            <label><input type="radio" name="shimu_gn" value="未践行"> 未践行</label>
+                            <label><input type="radio" name="shimu_gn" value="部分践行" onchange="toggleShimuInput('gn')"> 部分践行</label>
+                        </div>
+                        <input type="text" class="core-component mini-input" id="shimu_gn_input" placeholder="例：3次成功2次遗漏" style="display: none;">
+                    </div>
+                    <div class="shimu-item">
+                        <label class="form-label">2. 正心</label>
+                        <div class="shimu-radio">
+                            <label><input type="radio" name="shimu_zx" value="践行"> 践行</label>
+                            <label><input type="radio" name="shimu_zx" value="未践行"> 未践行</label>
+                            <label><input type="radio" name="shimu_zx" value="部分践行" onchange="toggleShimuInput('zx')"> 部分践行</label>
+                        </div>
+                        <input type="text" class="core-component mini-input" id="shimu_zx_input" placeholder="例：3次成功2次遗漏" style="display: none;">
+                    </div>
+                    <div class="shimu-item">
+                        <label class="form-label">3. 修身</label>
+                        <div class="shimu-radio">
+                            <label><input type="radio" name="shimu_xs" value="践行"> 践行</label>
+                            <label><input type="radio" name="shimu_xs" value="未践行"> 未践行</label>
+                            <label><input type="radio" name="shimu_xs" value="部分践行" onchange="toggleShimuInput('xs')"> 部分践行</label>
+                        </div>
+                        <input type="text" class="core-component mini-input" id="shimu_xs_input" placeholder="例：3次成功2次遗漏" style="display: none;">
+                    </div>
+                    <div class="shimu-item">
+                        <label class="form-label">4. 处事</label>
+                        <div class="shimu-radio">
+                            <label><input type="radio" name="shimu_cs" value="践行"> 践行</label>
+                            <label><input type="radio" name="shimu_cs" value="未践行"> 未践行</label>
+                            <label><input type="radio" name="shimu_cs" value="部分践行" onchange="toggleShimuInput('cs')"> 部分践行</label>
+                        </div>
+                        <input type="text" class="core-component mini-input" id="shimu_cs_input" placeholder="例：3次成功2次遗漏" style="display: none;">
+                    </div>
+                    <div class="shimu-item">
+                        <label class="form-label">5. 接物</label>
+                        <div class="shimu-radio">
+                            <label><input type="radio" name="shimu_jw" value="践行"> 践行</label>
+                            <label><input type="radio" name="shimu_jw" value="未践行"> 未践行</label>
+                            <label><input type="radio" name="shimu_jw" value="部分践行" onchange="toggleShimuInput('jw')"> 部分践行</label>
+                        </div>
+                        <input type="text" class="core-component mini-input" id="shimu_jw_input" placeholder="例：3次成功2次遗漏" style="display: none;">
+                    </div>
+                    <div class="shimu-item">
+                        <label class="form-label">6. 齐家</label>
+                        <div class="shimu-radio">
+                            <label><input type="radio" name="shimu_qj" value="践行"> 践行</label>
+                            <label><input type="radio" name="shimu_qj" value="未践行"> 未践行</label>
+                            <label><input type="radio" name="shimu_qj" value="部分践行" onchange="toggleShimuInput('qj')"> 部分践行</label>
+                        </div>
+                        <input type="text" class="core-component mini-input" id="shimu_qj_input" placeholder="例：3次成功2次遗漏" style="display: none;">
+                    </div>
+                    <div class="shimu-item">
+                        <label class="form-label">7. 济世</label>
+                        <div class="shimu-radio">
+                            <label><input type="radio" name="shimu_js" value="践行"> 践行</label>
+                            <label><input type="radio" name="shimu_js" value="未践行"> 未践行</label>
+                            <label><input type="radio" name="shimu_js" value="部分践行" onchange="toggleShimuInput('js')"> 部分践行</label>
+                        </div>
+                        <input type="text" class="core-component mini-input" id="shimu_js_input" placeholder="例：3次成功2次遗漏" style="display: none;">
+                    </div>
+                    <div class="shimu-item">
+                        <label class="form-label">8. 一贯</label>
+                        <div class="shimu-radio">
+                            <label><input type="radio" name="shimu_yg" value="践行"> 践行</label>
+                            <label><input type="radio" name="shimu_yg" value="未践行"> 未践行</label>
+                            <label><input type="radio" name="shimu_yg" value="部分践行" onchange="toggleShimuInput('yg')"> 部分践行</label>
+                        </div>
+                        <input type="text" class="core-component mini-input" id="shimu_yg_input" placeholder="例：3次成功2次遗漏" style="display: none;">
+                    </div>
+                    <div class="shimu-item">
+                        <label class="form-label">9. 成性</label>
+                        <div class="shimu-radio">
+                            <label><input type="radio" name="shimu_cx" value="践行"> 践行</label>
+                            <label><input type="radio" name="shimu_cx" value="未践行"> 未践行</label>
+                            <label><input type="radio" name="shimu_cx" value="部分践行" onchange="toggleShimuInput('cx')"> 部分践行</label>
+                        </div>
+                        <input type="text" class="core-component mini-input" id="shimu_cx_input" placeholder="例：3次成功2次遗漏" style="display: none;">
+                    </div>
+                    <div class="shimu-item">
+                        <label class="form-label">10. 化民</label>
+                        <div class="shimu-radio">
+                            <label><input type="radio" name="shimu_hm" value="践行"> 践行</label>
+                            <label><input type="radio" name="shimu_hm" value="未践行"> 未践行</label>
+                            <label><input type="radio" name="shimu_hm" value="部分践行" onchange="toggleShimuInput('hm')"> 部分践行</label>
+                        </div>
+                        <input type="text" class="core-component mini-input" id="shimu_hm_input" placeholder="例：3次成功2次遗漏" style="display: none;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="xinjian_density">焊缝能量密度（1-10分）</label>
+                    <div class="slider-wrapper">
+                        <input type="range" class="core-component" id="xinjian_density" min="1" max="10" value="5">
+                        <span id="density-value">5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模块4：《道德经・五维生命智慧体系探索》 -->
+        <div class="form-module" id="module-daode">
+            <div class="module-title">
+                《道德经・五维生命智慧体系探索》——81个现代生命困惑的修身实践
+                <span class="collapse-btn" onclick="toggleModule('module-daode-content')">折叠 ▲</span>
+            </div>
+            <div id="module-daode-content">
+                <div class="form-group">
+                    <label class="form-label" for="daode_chapter">对应书籍章节（单选，支持搜索）</label>
+                    <select class="core-component" id="daode_chapter" onchange="showChapterTips()">
+                        <option value="">请选择对应困惑章节</option>
+                        <!-- 第一卷：治神篇（1-20章） -->
+                        <option value="第1章：【道体分离之惑+命名依赖之困】·体道章">第1章：【道体分离之惑+命名依赖之困】·体道章</option>
+                        <option value="第2章：【二元对立之碍+完美主义之偏】·养身章">第2章：【二元对立之碍+完美主义之偏】·养身章</option>
+                        <option value="第3章：【欲望过亢之扰+攀比焦虑之困】·安民章">第3章：【欲望过亢之扰+攀比焦虑之困】·安民章</option>
+                        <option value="第4章：【用道失调之失+创造力枯竭之困】·无源章">第4章：【用道失调之失+创造力枯竭之困】·无源章</option>
+                        <option value="第5章：【情感淡漠之隔+共情待深之缺】·虚用章">第5章：【情感淡漠之隔+共情待深之缺】·虚用章</option>
+                        <option value="第6章：【生命能量待蓄之困+元气涵养之需】·成象章">第6章：【生命能量待蓄之困+元气涵养之需】·成象章</option>
+                        <option value="第7章：【自我中心之执+人际连接之碍】·韬光章">第7章：【自我中心之执+人际连接之碍】·韬光章</option>
+                        <option value="第8章：【竞争焦虑之扰+生存恐惧之困】·易性章">第8章：【竞争焦虑之扰+生存恐惧之困】·易性章</option>
+                        <option value="第9章：【持盈过甚之执+掌控过度之困】·运夷章">第9章：【持盈过甚之执+掌控过度之困】·运夷章</option>
+                        <option value="第10章：【身心分离之惑+知行脱节之困】·能为章">第10章：【身心分离之惑+知行脱节之困】·能为章</option>
+                        <option value="第11章：【有用无用之惑+实用主义之困】·无用章">第11章：【有用无用之惑+实用主义之困】·无用章</option>
+                        <option value="第12章：【感官过载之扰+信息焦虑之困】·检欲章">第12章：【感官过载之扰+信息焦虑之困】·检欲章</option>
+                        <option value="第13章：【宠辱得失之扰+评价依赖之困】·厌耻章">第13章：【宠辱得失之扰+评价依赖之困】·厌耻章</option>
+                        <option value="第14章：【时空错位之惑+时间焦虑之困】·赞玄章">第14章：【时空错位之惑+时间焦虑之困】·赞玄章</option>
+                        <option value="第15章：【人格僵化之碍+身份认同之惑】·显质章">第15章：【人格僵化之碍+身份认同之惑】·显质章</option>
+                        <option value="第16章：【归根之碍+漂泊无根之困】·归根章">第16章：【归根之碍+漂泊无根之困】·归根章</option>
+                        <option value="第17章：【权威依赖之惑+自主决策之困】·淳风章">第17章：【权威依赖之惑+自主决策之困】·淳风章</option>
+                        <option value="第18章：【道德伪善之惑+冷漠疏离之困】·俗薄章">第18章：【道德伪善之惑+冷漠疏离之困】·俗薄章</option>
+                        <option value="第19章：【知识过载之扰+思维固化之困】·还淳章">第19章：【知识过载之扰+思维固化之困】·还淳章</option>
+                        <option value="第20章：【存在孤独之惑+疏离合群之困】·异俗章">第20章：【存在孤独之惑+疏离合群之困】·异俗章</option>
+                        <!-- 第二卷：治心篇（21-40章） -->
+                        <option value="第21章：【情志失察之感+情感表达之碍】·虚心章">第21章：【情志失察之感+情感表达之碍】·虚心章</option>
+                        <option value="第22章：【挫折创伤之扰+失败恐惧之困】·益谦章">第22章：【挫折创伤之扰+失败恐惧之困】·益谦章</option>
+                        <option value="第23章：【无常焦虑之惑+控制欲过强之困】·虚极章">第23章：【无常焦虑之惑+控制欲过强之困】·虚极章</option>
+                        <option value="第24章：【虚荣外驰之惑+虚假自体之困】·苦恩章">第24章：【虚荣外驰之惑+虚假自体之困】·苦恩章</option>
+                        <option value="第25章：【方向迷失之惑+导航失灵之困】·象元章">第25章：【方向迷失之惑+导航失灵之困】·象元章</option>
+                        <option value="第26章：【轻重失衡之惑+本末倒置之困】·重德章">第26章：【轻重失衡之惑+本末倒置之困】·重德章</option>
+                        <option value="第27章：【智慧闭塞之惑+认知局限之困】·巧用章">第27章：【智慧闭塞之惑+认知局限之困】·巧用章</option>
+                        <option value="第28章：【刚柔失和之惑+情绪失控之困】·反朴章">第28章：【刚柔失和之惑+情绪失控之困】·反朴章</option>
+                        <option value="第29章：【强力妄为之惑+过度干预之困】·无为章">第29章：【强力妄为之惑+过度干预之困】·无为章</option>
+                        <option value="第30章：【暴力冲突之惑+攻击性倾向之困】·俭武章">第30章：【暴力冲突之惑+攻击性倾向之困】·俭武章</option>
+                        <option value="第31章：【战争心态之扰+敌对思维之困】·偃武章">第31章：【战争心态之扰+敌对思维之困】·偃武章</option>
+                        <option value="第32章：【秩序失序之惑+规则漠视之困】·圣德章">第32章：【秩序失序之惑+规则漠视之困】·圣德章</option>
+                        <option value="第33章：【自知之惑+认知偏差之困】·辨德章">第33章：【自知之惑+认知偏差之困】·辨德章</option>
+                        <option value="第34章：【大小迷失之惑+格局狭隘之困】·任成章">第34章：【大小迷失之惑+格局狭隘之困】·任成章</option>
+                        <option value="第35章：【平淡之扰+刺激依赖之困】·仁德章">第35章：【平淡之扰+刺激依赖之困】·仁德章</option>
+                        <option value="第36章：【微明之惑+预判之困】·微明章">第36章：【微明之惑+预判之困】·微明章</option>
+                        <option value="第37章：【欲望无厌之惑+贪得无厌之困】·为政章">第37章：【欲望无厌之惑+贪得无厌之困】·为政章</option>
+                        <option value="第38章：【上德失落+道德滑坡之困】·论德章">第38章：【上德失落+道德滑坡之困】·论德章</option>
+                        <option value="第39章：【得一之惑+身心失衡之困】·法本章">第39章：【得一之惑+身心失衡之困】·法本章</option>
+                        <option value="第40章：【创造之惑+生命动能停滞之困】·去用章">第40章：【创造之惑+生命动能停滞之困】·去用章</option>
+                        <!-- 第三卷：治身篇（41-60章） -->
+                        <option value="第41章：【成长焦虑之惑+大器晚成之困】·同异章">第41章：【成长焦虑之惑+大器晚成之困】·同异章</option>
+                        <option value="第42章：【阴阳失和之惑+内在冲突之困】·道化章">第42章：【阴阳失和之惑+内在冲突之困】·道化章</option>
+                        <option value="第43章：【柔性缺失+刚性过盛之困】·偏用章">第43章：【柔性缺失+刚性过盛之困】·偏用章</option>
+                        <option value="第44章：【名利执念+价值物化之困】·立戒章">第44章：【名利执念+价值物化之困】·立戒章</option>
+                        <option value="第45章：【清静之惑+心神不宁之困】·洪德章">第45章：【清静之惑+心神不宁之困】·洪德章</option>
+                        <option value="第46章：【纵欲耗损之惑+气血亏虚之困】·俭欲章">第46章：【纵欲耗损之惑+气血亏虚之困】·俭欲章</option>
+                        <option value="第47章：【外求之扰+内虚之困】·鉴远章">第47章：【外求之扰+内虚之困】·鉴远章</option>
+                        <option value="第48章：【有为过度之惑+努力耗损之困】·忘知章">第48章：【有为过度之惑+努力耗损之困】·忘知章</option>
+                        <option value="第49章：【分别之惑+偏见之困】·任德章">第49章：【分别之惑+偏见之困】·任德章</option>
+                        <option value="第50章：【生死之惑+存在之困】·贵生章">第50章：【生死之惑+存在之困】·贵生章</option>
+                        <option value="第51章：【玄德不养之惑+德性不足之困】·养德章">第51章：【玄德不养之惑+德性不足之困】·养德章</option>
+                        <option value="第52章：【母体失联之惑+归属缺失之困】·归元章">第52章：【母体失联之惑+归属缺失之困】·归元章</option>
+                        <option value="第53章：【邪径迷恋之惑+捷径依赖之困】·益证章">第53章：【邪径迷恋之惑+捷径依赖之困】·益证章</option>
+                        <option value="第54章：【根基不牢之惑+基础薄弱之困】·修观章">第54章：【根基不牢之惑+基础薄弱之困】·修观章</option>
+                        <option value="第55章：【赤子失真之惑+纯真丧失之困】·玄符章">第55章：【赤子失真之惑+纯真丧失之困】·玄符章</option>
+                        <option value="第56章：【是非纠缠之惑+争辩成瘾之困】·玄德章">第56章：【是非纠缠之惑+争辩成瘾之困】·玄德章</option>
+                        <option value="第57章：【以奇治国之惑+投机取巧之困】·淳风章">第57章：【以奇治国之惑+投机取巧之困】·淳风章</option>
+                        <option value="第58章：【福祸迷惑之惑+得失焦虑之困】·顺化章">第58章：【福祸迷惑之惑+得失焦虑之困】·顺化章</option>
+                        <option value="第59章：【积蓄障碍之惑+储备不足之困】·守道章">第59章：【积蓄障碍之惑+储备不足之困】·守道章</option>
+                        <option value="第60章：【复杂焦虑之惑+简化能力之困】·居位章">第60章：【复杂焦虑之惑+简化能力之困】·居位章</option>
+                        <!-- 第四卷：治性篇（61-80章） -->
+                        <option value="第61章：【谦卑障碍之惑+傲慢自负之困】·谦德章">第61章：【谦卑障碍之惑+傲慢自负之困】·谦德章</option>
+                        <option value="第62章：【为贵之惑+本末倒置之困】·为道章">第62章：【为贵之惑+本末倒置之困】·为道章</option>
+                        <option value="第63章：【大事难为之惑+畏难情绪之困】·为无为章">第63章：【大事难为之惑+畏难情绪之困】·为无为章</option>
+                        <option value="第64章：【未兆未察之惑+危机意识之困】·守微章">第64章：【未兆未察之惑+危机意识之困】·守微章</option>
+                        <option value="第65章：【明民之惑+沟通障碍之困】·淳德章">第65章：【明民之惑+沟通障碍之困】·淳德章</option>
+                        <option value="第66章：【江海为下之惑+谦下不足之困】·后己章">第66章：【江海为下之惑+谦下不足之困】·后己章</option>
+                        <option value="第67章：【三宝遗失之惑+德性缺失之困】·三宝章">第67章：【三宝遗失之惑+德性缺失之困】·三宝章</option>
+                        <option value="第68章：【不争之德之惑+好胜心过强之困】·配天章">第68章：【不争之德之惑+好胜心过强之困】·配天章</option>
+                        <option value="第69章：【用兵有言之惑+冲突倾向之困】·玄用章">第69章：【用兵有言之惑+冲突倾向之困】·玄用章</option>
+                        <option value="第70章：【知稀之惑+真知匮乏之困】·知难章">第70章：【知稀之惑+真知匮乏之困】·知难章</option>
+                        <option value="第72章：【民不畏威之惑+规则漠视之困】·爱身章">第72章：【民不畏威之惑+规则漠视之困】·爱身章</option>
+                        <option value="第73章：【天网失敬之惑+侥幸妄为之困】·任为章">第73章：【天网失敬之惑+侥幸妄为之困】·任为章</option>
+                        <option value="第74章：【民不畏死之惑+生命漠视之困】·制惑章">第74章：【民不畏死之惑+生命漠视之困】·制惑章</option>
+                        <option value="第75章：【民生艰难之惑+生存压力之困】·贪损章">第75章：【民生艰难之惑+生存压力之困】·贪损章</option>
+                        <option value="第76章：【刚硬偏执之惑+柔润不足之困】·戒强章">第76章：【刚硬偏执之惑+柔润不足之困】·戒强章</option>
+                        <option value="第77章：【天道失衡之惑+公平执念之困】·天道章">第77章：【天道失衡之惑+公平执念之困】·天道章</option>
+                        <option value="第78章：【柔水攻坚之惑+以柔克刚之碍】·任信章">第78章：【柔水攻坚之惑+以柔克刚之碍】·任信章</option>
+                        <option value="第79章：【和大怨余怨之惑+怨恨执念之困】·任德章">第79章：【和大怨余怨之惑+怨恨执念之困】·任德章</option>
+                        <option value="第80章：【理想主义+现实适应之困】·独立章">第80章：【理想主义+现实适应之困】·独立章</option>
+                        <!-- 第五卷：治世篇（81章） -->
+                        <option value="第81章：【生命圆满之惑+价值混乱之困】·显质章">第81章：【生命圆满之惑+价值混乱之困】·显质章</option>
+                    </select>
+                    <div class="form-hint" id="chapter-tips" style="margin-top: 8px; color: #2E7D32;"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="daode_zhishen">治神时长（分钟）</label>
+                    <input type="number" class="core-component" id="daode_zhishen" min="0" step="0.5" placeholder="对应章节核心修习-治神时长">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="daode_hrv">HRV数值（ms²）</label>
+                    <input type="number" class="core-component" id="daode_hrv" min="0" placeholder="生理监测数据（无则留空）">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="daode_shenju">神聚度（1-10分）</label>
+                    <div class="slider-wrapper">
+                        <input type="range" class="core-component" id="daode_shenju" min="1" max="10" value="5">
+                        <span id="shenju-value">5</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="daode_emotion">情绪稳定度（1-10分）</label>
+                    <div class="slider-wrapper">
+                        <input type="range" class="core-component" id="daode_emotion" min="1" max="10" value="5">
+                        <span id="emotion-value">5</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="daode_sleep">睡眠时长（小时）</label>
+                    <input type="number" class="core-component" id="daode_sleep" min="0" step="0.5" placeholder="对应章节治身篇-作息涵养数据">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="daode_interact">互动满意度（1-10分）</label>
+                    <div class="slider-wrapper">
+                        <input type="range" class="core-component" id="daode_interact" min="1" max="10" value="5">
+                        <span id="interact-value">5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模块5：总结与明日规划 -->
+        <div class="form-module" id="module-summary">
+            <div class="module-title">
+                总结与明日规划 <span class="required">(必填)</span>
+                <span class="collapse-btn" onclick="toggleModule('module-summary-content')">折叠 ▲</span>
+            </div>
+            <div id="module-summary-content">
+                <div class="form-group">
+                    <label class="form-label required" for="summary_feeling">今日核心感悟</label>
+                    <div style="display: flex; gap: 8px;">
+                        <textarea class="core-component" id="summary_feeling" placeholder="元认知反思（例：不争并非消极，而是内心清静的自然流露/修习第3章后，攀比焦虑明显缓解）" rows="4"></textarea>
+                        <button class="voice-btn core-component" onclick="startVoice('summary_feeling')">
+                            🎤 <span class="voice-status">语音输入</span>
+                        </button>
+                    </div>
+                    <p class="form-hint emphasis">最少输入15字，结合当日修习做深度反思</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="summary_highlights">数据亮点</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="core-component" id="summary_highlights" placeholder="量化数据/践行成果（例：心践十目践行率90%/治神时长达标20分钟）">
+                        <button class="core-component" id="extract-highlights">提取亮点</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="tomorrow_xinchuan">明日重点-圣学心传</label>
+                    <select class="core-component" id="tomorrow_xinchuan">
+                        <option value="">请选择</option>
+                        <option value="道维-破妄见真">道维-破妄见真</option>
+                        <option value="德维-积德显真">德维-积德显真</option>
+                        <option value="仁维-仁爱显真">仁维-仁爱显真</option>
+                        <option value="义维-义行守真">义维-义行守真</option>
+                        <option value="礼维-礼序安真">礼维-礼序安真</option>
+                        <option value="智维-明智辨真">智维-明智辨真</option>
+                        <option value="信维-诚信归真">信维-诚信归真</option>
+                        <option value="融维-圆融通真">融维-圆融通真</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="tomorrow_xinjian">明日重点-圣学心践</label>
+                    <select class="core-component" id="tomorrow_xinjian">
+                        <option value="">请选择</option>
+                        <option value="格念">格念</option>
+                        <option value="正心">正心</option>
+                        <option value="修身">修身</option>
+                        <option value="处事">处事</option>
+                        <option value="接物">接物</option>
+                        <option value="齐家">齐家</option>
+                        <option value="济世">济世</option>
+                        <option value="一贯">一贯</option>
+                        <option value="成性">成性</option>
+                        <option value="化民">化民</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="tomorrow_daode">明日重点-五维</label>
+                    <select class="core-component" id="tomorrow_daode">
+                        <option value="">请选择</option>
+                        <option value="治神篇重点">治神篇重点</option>
+                        <option value="治心篇重点">治心篇重点</option>
+                        <option value="治身篇重点">治身篇重点</option>
+                        <option value="治性篇重点">治性篇重点</option>
+                        <option value="治世篇重点">治世篇重点</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧实时预览区 -->
+    <div class="preview-container" id="preview-panel">
+        <div class="preview-title">日报实时预览</div>
+        <div class="preview-content" id="preview-content">
+            <!-- 预览内容由JS实时填充 -->
+            <div class="preview-module">
+                <strong>基础信息</strong>
+                <p>日期：<span id="preview-date">--</span></p>
+                <p>星期：<span id="preview-weekday">--</span></p>
+                <p>日报编号：<span id="preview-reportid">--</span></p>
+                <p>核心修习方向：<span id="preview-direction">--</span></p>
+                <p>天气/环境：<span id="preview-weather">--</span></p>
+            </div>
+            <div class="preview-module">
+                <strong>圣学心传体悟</strong>
+                <p>今日箴言：<span id="preview-proverb">--</span></p>
+                <p>应用场景：<span id="preview-scene">--</span></p>
+                <p>八维定位：<span id="preview-eight">--</span></p>
+                <p>六序进度：<span id="preview-six">--</span></p>
+                <p>能量感知：<span id="preview-energy">--</span>分</p>
+                <p>妄念类型/格除次数：<span id="preview-wangnian">--</span> / <span id="preview-remove">--</span>次</p>
+            </div>
+            <div class="preview-module">
+                <strong>圣学心践十目</strong>
+                <p>践行完成率：<span id="preview-shimu-rate">--</span>%</p>
+                <p>焊缝能量密度：<span id="preview-density">--</span>分</p>
+            </div>
+            <div class="preview-module">
+                <strong>道德经五维修习</strong>
+                <p>对应章节：<span id="preview-chapter">--</span></p>
+                <p>治神时长：<span id="preview-zhishen">--</span>分钟</p>
+                <p>神聚度/情绪稳定度：<span id="preview-shenju">--</span>/<span id="preview-emotion">--</span>分</p>
+                <p>睡眠时长：<span id="preview-sleep">--</span>小时</p>
+                <p>互动满意度：<span id="preview-interact">--</span>分</p>
+            </div>
+            <div class="preview-module">
+                <strong>总结与规划</strong>
+                <p>今日核心感悟：<span id="preview-feeling">--</span></p>
+                <p>数据亮点：<span id="preview-highlights">--</span></p>
+                <p>明日重点：<span id="preview-tomorrow">--</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部操作区 -->
+    <div class="header-nav" style="top: auto; bottom: 0; box-shadow: 0 -2px 4px rgba(0,0,0,0.1);">
+        <div class="operation-btns">
+            <button class="core-component" id="save-draft-bottom">保存草稿</button>
+            <button class="core-component" id="submit-sync-bottom">提交同步</button>
+            <button class="core-component" id="clear-form">清空重填</button>
+        </div>
+    </div>
+
+    <script>
+        // 初始化日期、星期、日报编号
+        window.onload = function() {
+            // 1. 自动填充日期
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+            document.getElementById('date').value = dateStr;
+            
+            // 2. 自动填充星期
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekdayStr = weekdays[today.getDay()];
+            document.getElementById('weekday').value = weekdayStr;
+            
+            // 3. 自动生成日报编号（年份后两位+月份+日期+3位序号，示例默认001）
+            const year = today.getFullYear().toString().slice(-2);
+            const month = (today.getMonth() + 1).toString().padStart(2, '0');
+            const day = today.getDate().toString().padStart(2, '0');
+            const reportId = year + month + day + '001';
+            document.getElementById('report-id').value = reportId;
+
+            // 初始化预览
+            updatePreview();
+
+            // 监听输入事件，实时更新预览
+            const allInputs = document.querySelectorAll('input, textarea, select');
+            allInputs.forEach(input => {
+                input.addEventListener('input', updatePreview);
+                input.addEventListener('change', updatePreview);
+            });
+
+            // 能量感知滑块联动
+            const energySlider = document.getElementById('xinchuan_energy');
+            energySlider.addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('energy-value').textContent = value;
+                // 能量感知提示
+                let tip = '';
+                if (value <= 3) tip = '状态不佳';
+                else if (value <= 6) tip = '状态中等';
+                else if (value <= 8) tip = '状态良好';
+                else tip = '状态极佳';
+                document.getElementById('energy-tip').textContent = tip;
+            });
+
+            // 焊缝密度滑块联动
+            const densitySlider = document.getElementById('xinjian_density');
+            densitySlider.addEventListener('input', function() {
+                document.getElementById('density-value').textContent = this.value;
+            });
+
+            // 五维模块滑块联动
+            const shenjuSlider = document.getElementById('daode_shenju');
+            shenjuSlider.addEventListener('input', function() {
+                document.getElementById('shenju-value').textContent = this.value;
+            });
+            const emotionSlider = document.getElementById('daode_emotion');
+            emotionSlider.addEventListener('input', function() {
+                document.getElementById('emotion-value').textContent = this.value;
+            });
+            const interactSlider = document.getElementById('daode_interact');
+            interactSlider.addEventListener('input', function() {
+                document.getElementById('interact-value').textContent = this.value;
+            });
+
+            // 核心修习方向标签展示
+            const directionSelect = document.getElementById('core-direction');
+            directionSelect.addEventListener('change', function() {
+                const tagsContainer = document.getElementById('direction-tags');
+                tagsContainer.innerHTML = '';
+                const selectedOptions = Array.from(this.selectedOptions).map(option => option.value);
+                selectedOptions.forEach(option => {
+                    const tag = document.createElement('span');
+                    tag.className = 'tag';
+                    tag.textContent = option;
+                    tagsContainer.appendChild(tag);
+                });
+                // 联动五维模块显示/隐藏
+                const daodeModule = document.getElementById('module-daode');
+                if (selectedOptions.includes('道德经五维')) {
+                    daodeModule.style.display = 'block';
+                } else {
+                    daodeModule.style.display = 'none';
+                }
+            });
+
+            // 六序进度标签展示
+            const sixSelect = document.getElementById('xinchuan_six');
+            sixSelect.addEventListener('change', function() {
+                const tagsContainer = document.getElementById('six-tags');
+                tagsContainer.innerHTML = '';
+                const selectedOptions = Array.from(this.selectedOptions).map(option => option.value);
+                selectedOptions.forEach(option => {
+                    const tag = document.createElement('span');
+                    tag.className = 'tag';
+                    tag.textContent = option;
+                    tagsContainer.appendChild(tag);
+                });
+            });
+
+            // 箴言字数统计
+            const proverbTextarea = document.getElementById('xinchuan_proverb');
+            proverbTextarea.addEventListener('input', function() {
+                const count = this.value.length;
+                document.getElementById('xinchuan_proverb-count').textContent = count + '/200';
+            });
+
+            // 尝试恢复本地草稿
+            restoreDraft(reportId);
+        };
+
+        // 模块折叠/展开
+        function toggleModule(moduleId) {
+            const content = document.getElementById(moduleId);
+            const btn = event.target;
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                btn.textContent = '折叠 ▲';
+            } else {
+                content.style.display = 'none';
+                btn.textContent = '展开 ▼';
+            }
+        }
+
+        // 妄念类型-其他输入框切换
+        function toggleWangnianOther() {
+            const select = document.getElementById('xinchuan_wangnian');
+            const otherInput = document.getElementById('xinchuan_wangnian_other');
+            if (select.value === '其他') {
+                otherInput.style.display = 'block';
+            } else {
+                otherInput.style.display = 'none';
+            }
+        }
+
+        // 十目践行-部分践行输入框切换
+        function toggleShimuInput(type) {
+            const input = document.getElementById(`shimu_${type}_input`);
+            // 检查是否选中"部分践行"
+            const radioChecked = document.querySelector(`input[name="shimu_${type}"][value="部分践行"]`).checked;
+            if (radioChecked) {
+                input.style.display = 'block';
+            } else {
+                input.style.display = 'none';
+            }
+        }
+
+        // 章节选择提示（修复语法错误，补全完整逻辑）
+        function showChapterTips() {
+            const chapterSelect = document.getElementById('daode_chapter');
+            const tipsDiv = document.getElementById('chapter-tips');
+            const selectedChapter = chapterSelect.value;
+            if (!selectedChapter) {
+                tipsDiv.textContent = '';
+                return;
+            }
+            // 章节提示映射（示例，可扩展完整映射）
+            const chapterTips = {
+                '第1章：【道体分离之惑+命名依赖之困】·体道章': '核心修习：致虚守静功 | 适配场景：职场命名依赖 | 重点字段：治神时长',
+                '第2章：【二元对立之碍+完美主义之偏】·养身章': '核心修习：阴阳调和功 | 适配场景：生活完美主义执念 | 重点字段：情绪稳定度',
+                '第3章：【欲望过亢之扰+攀比焦虑之困】·安民章': '核心修习：清心寡欲功 | 适配场景：社交攀比焦虑 | 重点字段：神聚度'
+            };
+            // 通用提示（无匹配时）
+            const defaultTip = '请结合该章节核心困惑，如实填写修习数据';
+            tipsDiv.textContent = chapterTips[selectedChapter] || defaultTip;
+            
+            // 重点字段标红提示（治神篇）
+            if (selectedChapter.includes('治神篇') || selectedChapter.startsWith('第1章') || selectedChapter.startsWith('第2章') || selectedChapter.startsWith('第3章')) {
+                document.querySelector('label[for="daode_zhishen"]').className = 'form-label required';
+            } else {
+                document.querySelector('label[for="daode_zhishen"]').className = 'form-label';
+            }
+            // 重点字段标红提示（治世篇）
+            if (selectedChapter.includes('治世篇') || selectedChapter.startsWith('第81章')) {
+                document.querySelector('label[for="daode_interact"]').className = 'form-label required';
+            } else {
+                document.querySelector('label[for="daode_interact"]').className = 'form-label';
+            }
+        }
+
+        // 语音输入功能（兼容Chrome）
+        function startVoice(targetId) {
+            const target = document.getElementById(targetId);
+            const voiceStatus = document.querySelector(`#voice-btn-${targetId} .voice-status`) || document.querySelector('.voice-status');
+            // 检查浏览器支持
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('您的浏览器不支持语音识别，请使用Chrome浏览器');
+                return;
+            }
+            const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new Recognition();
+            recognition.lang = 'zh-CN';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = function() {
+                voiceStatus.textContent = '正在识别...';
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                target.value = transcript;
+                // 触发输入事件更新预览和字数统计
+                target.dispatchEvent(new Event('input'));
+                voiceStatus.textContent = '语音输入';
+            };
+
+            recognition.onerror = function(event) {
+                voiceStatus.textContent = '语音输入';
+                alert('语音识别失败：' + event.error);
+            };
+
+            recognition.onend = function() {
+                voiceStatus.textContent = '语音输入';
+            };
+
+            recognition.start();
+        }
+
+        // 实时更新预览
+        function updatePreview() {
+            // 基础信息
+            document.getElementById('preview-date').textContent = document.getElementById('date').value || '--';
+            document.getElementById('preview-weekday').textContent = document.getElementById('weekday').value || '--';
+            document.getElementById('preview-reportid').textContent = document.getElementById('report-id').value || '--';
+            // 核心修习方向
+            const directionTags = Array.from(document.getElementById('core-direction').selectedOptions).map(o => o.value).join(', ') || '--';
+            document.getElementById('preview-direction').textContent = directionTags;
+            document.getElementById('preview-weather').textContent = document.getElementById('weather').value || '--';
+            
+            // 心传模块
+            document.getElementById('preview-proverb').textContent = document.getElementById('xinchuan_proverb').value || '--';
+            document.getElementById('preview-scene').textContent = document.getElementById('xinchuan_scene').value || '--';
+            document.getElementById('preview-eight').textContent = document.getElementById('xinchuan_eight').value || '--';
+            const sixTags = Array.from(document.getElementById('xinchuan_six').selectedOptions).map(o => o.value).join(', ') || '--';
+            document.getElementById('preview-six').textContent = sixTags;
+            document.getElementById('preview-energy').textContent = document.getElementById('xinchuan_energy').value || '--';
+            // 妄念类型（含其他）
+            let wangnian = document.getElementById('xinchuan_wangnian').value || '--';
+            if (wangnian === '其他') {
+                wangnian = '其他：' + (document.getElementById('xinchuan_wangnian_other').value || '未填写');
+            }
+            document.getElementById('preview-wangnian').textContent = wangnian;
+            document.getElementById('preview-remove').textContent = document.getElementById('xinchuan_remove_count').value || '0';
+            
+            // 心践模块（计算践行完成率）
+            const shimuTypes = ['gn','zx','xs','cs','jw','qj','js','yg','cx','hm'];
+            let doneCount = 0;
+            shimuTypes.forEach(type => {
+                const selected = document.querySelector(`input[name="shimu_${type}"]:checked`);
+                if (selected && selected.value === '践行') doneCount++;
+            });
+            const rate = shimuTypes.length > 0 ? (doneCount / shimuTypes.length * 100).toFixed(0) : 0;
+            document.getElementById('preview-shimu-rate').textContent = rate;
+            document.getElementById('preview-density').textContent = document.getElementById('xinjian_density').value || '--';
+            
+            // 五维模块
+            document.getElementById('preview-chapter').textContent = document.getElementById('daode_chapter').value || '--';
+            document.getElementById('preview-zhishen').textContent = document.getElementById('daode_zhishen').value || '--';
+            document.getElementById('preview-shenju').textContent = document.getElementById('daode_shenju').value || '--';
+            document.getElementById('preview-emotion').textContent = document.getElementById('daode_emotion').value || '--';
+            document.getElementById('preview-sleep').textContent = document.getElementById('daode_sleep').value || '--';
+            document.getElementById('preview-interact').textContent = document.getElementById('daode_interact').value || '--';
+            
+            // 总结模块
+            document.getElementById('preview-feeling').textContent = document.getElementById('summary_feeling').value || '--';
+            document.getElementById('preview-highlights').textContent = document.getElementById('summary_highlights').value || '--';
+            // 明日重点
+            const tomorrowXc = document.getElementById('tomorrow_xinchuan').value || '--';
+            const tomorrowXj = document.getElementById('tomorrow_xinjian').value || '--';
+            const tomorrowDd = document.getElementById('tomorrow_daode').value || '--';
+            document.getElementById('preview-tomorrow').textContent = `心传：${tomorrowXc} | 心践：${tomorrowXj} | 五维：${tomorrowDd}`;
+        }
+
+        // 补全：提取数据亮点（完整逻辑）
+        document.getElementById('extract-highlights').addEventListener('click', function() {
+            const highlights = [];
+            // 1. 心践十目践行率亮点（≥80%纳入）
+            const shimuRate = document.getElementById('preview-shimu-rate').textContent;
+            if (shimuRate !== '--' && parseInt(shimuRate) >= 80) {
+                highlights.push(`心践十目践行率${shimuRate}%`);
+            }
+            // 2. 能量感知高分亮点（≥8分纳入）
+            const energyValue = document.getElementById('xinchuan_energy').value;
+            if (energyValue && parseInt(energyValue) >= 8) {
+                highlights.push(`能量感知${energyValue}分（状态极佳）`);
+            }
+            // 3. 治神时长达标亮点（≥20分钟纳入）
+            const zhishenValue = document.getElementById('daode_zhishen').value;
+            if (zhishenValue && parseFloat(zhishenValue) >= 20) {
+                highlights.push(`治神时长${zhishenValue}分钟（达标）`);
+            }
+            // 4. 情绪稳定度高分亮点（≥9分纳入）
+            const emotionValue = document.getElementById('daode_emotion').value;
+            if (emotionValue && parseInt(emotionValue) >= 9) {
+                highlights.push(`情绪稳定度${emotionValue}分（优秀）`);
+            }
+            // 5. 自动拼接亮点并填充
+            const highlightsStr = highlights.length > 0 ? highlights.join(' | ') : '今日修习数据平稳，无突出亮点';
+            document.getElementById('summary_highlights').value = highlightsStr;
+            // 触发输入事件更新预览
+            document.getElementById('summary_highlights').dispatchEvent(new Event('input'));
+        });
+
+        // 核心功能1：保存草稿（顶部+底部按钮复用）
+        function saveDraft() {
+            const formData = {};
+            // 收集所有表单元素数据
+            const allInputs = document.querySelectorAll('input, textarea, select');
+            allInputs.forEach(input => {
+                if (input.id) {
+                    // 处理多选下拉框
+                    if (input.tagName === 'SELECT' && input.multiple) {
+                        formData[input.id] = Array.from(input.selectedOptions).map(option => option.value);
+                    } else {
+                        formData[input.id] = input.value;
+                    }
+                }
+            });
+            // 存储到本地缓存（避免数据丢失）
+            const reportId = document.getElementById('report-id').value;
+            localStorage.setItem('xinanDraft_' + reportId, JSON.stringify(formData));
+            // 提示保存成功
+            alert('草稿保存成功！数据已存储至本地，刷新页面后可恢复。');
+        }
+
+        // 核心功能2：恢复本地草稿
+        function restoreDraft(reportId) {
+            const draftKey = 'xinanDraft_' + reportId;
+            const draftStr = localStorage.getItem(draftKey);
+            if (!draftStr) return; // 无草稿则返回
+            
+            try {
+                const formData = JSON.parse(draftStr);
+                // 填充所有表单元素数据
+                const allInputs = document.querySelectorAll('input, textarea, select');
+                allInputs.forEach(input => {
+                    if (input.id && formData[input.id] !== undefined) {
+                        // 处理多选下拉框
+                        if (input.tagName === 'SELECT' && input.multiple) {
+                            const selectedValues = formData[input.id];
+                            Array.from(input.options).forEach(option => {
+                                option.selected = selectedValues.includes(option.value);
+                            });
+                            // 触发标签更新
+                            input.dispatchEvent(new Event('change'));
+                        } else {
+                            input.value = formData[input.id];
+                        }
+                        // 触发输入事件更新预览
+                        input.dispatchEvent(new Event('input'));
+                    }
+                });
+
+                // 恢复滑块关联显示
+                const energyValue = formData['xinchuan_energy'] || '5';
+                document.getElementById('energy-value').textContent = energyValue;
+                let energyTip = '';
+                if (energyValue <= 3) energyTip = '状态不佳';
+                else if (energyValue <= 6) energyTip = '状态中等';
+                else if (energyValue <= 8) energyTip = '状态良好';
+                else energyTip = '状态极佳';
+                document.getElementById('energy-tip').textContent = energyTip;
+
+                document.getElementById('density-value').textContent = formData['xinjian_density'] || '5';
+                document.getElementById('shenju-value').textContent = formData['daode_shenju'] || '5';
+                document.getElementById('emotion-value').textContent = formData['daode_emotion'] || '5';
+                document.getElementById('interact-value').textContent = formData['daode_interact'] || '5';
+
+                // 恢复箴言字数统计
+                const proverbCount = formData['xinchuan_proverb'] ? formData['xinchuan_proverb'].length : 0;
+                document.getElementById('xinchuan_proverb-count').textContent = proverbCount + '/200';
+
+                // 恢复"其他妄念"输入框显示
+                if (formData['xinchuan_wangnian'] === '其他') {
+                    document.getElementById('xinchuan_wangnian_other').style.display = 'block';
+                }
+
+                alert(`已成功恢复日报${reportId}的本地草稿！`);
+            } catch (e) {
+                console.error('草稿恢复失败：', e);
+                localStorage.removeItem(draftKey); // 损坏草稿清除
+            }
+        }
+
+        // 核心功能3：提交同步（含必填项验证）
+        function submitSync() {
+            // 1. 必填项验证
+            const requiredFields = [
+                { id: 'date', name: '日期' },
+                { id: 'weekday', name: '星期' },
+                { id: 'report-id', name: '日报编号' },
+                { id: 'core-direction', name: '核心修习方向' },
+                { id: 'summary_feeling', name: '今日核心感悟' }
+            ];
+            const emptyFields = [];
+
+            requiredFields.forEach(field => {
+                const input = document.getElementById(field.id);
+                let isEmpty = false;
+
+                if (input.tagName === 'SELECT' && input.multiple) {
+                    isEmpty = input.selectedOptions.length === 0;
+                } else {
+                    const value = input.value;
+                    isEmpty = !value || value.trim() === '';
+                }
+
+                if (isEmpty) {
+                    emptyFields.push(field.name);
+                }
+            });
+
+            // 2. 若有必填项未填写，提示并终止提交
+            if (emptyFields.length > 0) {
+                alert(`提交失败！以下必填项尚未填写：\n${emptyFields.join('\n')}`);
+                return;
+            }
+
+            // 3. 验证通过（实际项目可对接后端接口，此处做模拟提交）
+            const reportId = document.getElementById('report-id').value;
+            alert(`日报${reportId}提交同步成功！\n数据已上传至服务器，可在历史记录中查看。`);
+
+            // 4. 提交后清除本地草稿（可选）
+            localStorage.removeItem('xinanDraft_' + reportId);
+        }
+
+        // 绑定所有按钮事件
+        document.addEventListener('DOMContentLoaded', function() {
+            // 保存草稿
+            document.getElementById('save-draft').addEventListener('click', saveDraft);
+            document.getElementById('save-draft-bottom').addEventListener('click', saveDraft);
+
+            // 提交同步
+            document.getElementById('submit-sync').addEventListener('click', submitSync);
+            document.getElementById('submit-sync-bottom').addEventListener('click', submitSync);
+
+            // 清空重填
+            document.getElementById('clear-form').addEventListener('click', function() {
+                if (!confirm('确定要清空所有表单数据吗？此操作不可恢复！')) {
+                    return;
+                }
+
+                // 重置所有表单元素
+                const allInputs = document.querySelectorAll('input, textarea, select');
+                allInputs.forEach(input => {
+                    if (input.tagName === 'INPUT') {
+                        if (input.type === 'text' || input.type === 'number' || input.type === 'range') {
+                            input.value = input.type === 'range' ? '5' : '';
+                        } else if (input.type === 'radio') {
+                            input.checked = false;
+                        }
+                    } else if (input.tagName === 'TEXTAREA') {
+                        input.value = '';
+                    } else if (input.tagName === 'SELECT') {
+                        input.selectedIndex = 0;
+                        // 清空多选下拉框标签
+                        if (input.multiple) {
+                            const tagContainer = document.getElementById(input.id === 'core-direction' ? 'direction-tags' : 'six-tags');
+                            if (tagContainer) tagContainer.innerHTML = '';
+                        }
+                    }
+                    // 触发输入事件更新预览
+                    input.dispatchEvent(new Event('input'));
+                });
+
+                // 重置滑块关联显示
+                document.getElementById('energy-value').textContent = '5';
+                document.getElementById('energy-tip').textContent = '状态中等';
+                document.getElementById('density-value').textContent = '5';
+                document.getElementById('shenju-value').textContent = '5';
+                document.getElementById('emotion-value').textContent = '5';
+                document.getElementById('interact-value').textContent = '5';
+                document.getElementById('xinchuan_proverb-count').textContent = '0/200';
+
+                // 隐藏"其他妄念"输入框
+                document.getElementById('xinchuan_wangnian_other').style.display = 'none';
+
+                alert('表单已清空，可重新填写。');
+            });
+
+            // 预览日报（切换显示/隐藏）
+            document.getElementById('preview-daily').addEventListener('click', function() {
+                const previewPanel = document.getElementById('preview-panel');
+                const isMobile = window.innerWidth <= 768;
+
+                if (previewPanel.style.display === 'none' || previewPanel.style.display === '') {
+                    previewPanel.style.display = 'block';
+                    this.textContent = isMobile ? '隐藏预览' : '隐藏预览';
+                } else {
+                    previewPanel.style.display = 'none';
+                    this.textContent = isMobile ? '预览日报' : '预览日报';
+                }
+            });
+
+            // 导出PDF/图片（模拟功能，预留扩展接口）
+            document.getElementById('export-pdf').addEventListener('click', function() {
+                alert('PDF导出功能已触发！\n实际项目中可引入jsPDF库，将预览区内容转换为PDF文件下载。');
+                // 示例扩展（需引入jsPDF）：
+                // const { jsPDF } = window.jspdf;
+                // const pdf = new jsPDF();
+                // pdf.fromHTML(document.getElementById('preview-content'), 10, 10);
+                // pdf.save(`心安日报_${document.getElementById('report-id').value}.pdf`);
+            });
+
+            document.getElementById('export-img').addEventListener('click', function() {
+                alert('图片导出功能已触发！\n实际项目中可引入html2canvas库，将预览区内容转换为PNG/JPG图片下载。');
+                // 示例扩展（需引入html2canvas）：
+                // html2canvas(document.getElementById('preview-panel')).then(canvas => {
+                //     const imgUrl = canvas.toDataURL('image/png');
+                //     const a = document.createElement('a');
+                //     a.href = imgUrl;
+                //     a.download = `心安日报_${document.getElementById('report-id').value}.png`;
+                //     a.click();
+                // });
+            });
+
+            // 帮助指南
+            document.getElementById('help-guide').addEventListener('click', function() {
+                alert(`《中华圣学修身〈心安工程〉日报系统使用指南》
+1.  基础信息、今日核心感悟为必填项，标*字段需完整填写。
+2.  多选下拉框可按住Ctrl键选择多个选项，选择后会生成标签展示。
+3.  语音输入仅支持Chrome浏览器，点击🎤按钮即可开始语音转文字。
+4.  滑块组件可拖动调整评分，实时同步至预览区。
+5.  点击"提取亮点"可自动汇总今日修习优秀数据，无需手动填写。
+6.  日报填写完成后，可选择保存草稿、提交同步、导出PDF/图片。
+7.  本地草稿存储在浏览器缓存中，清除缓存会导致草稿丢失。`);
+            });
+
+            // 历史记录
+            document.getElementById('history-record').addEventListener('click', function() {
+                // 读取本地所有草稿记录
+                const draftKeys = Object.keys(localStorage).filter(key => key.startsWith('xinanDraft_'));
+                if (draftKeys.length === 0) {
+                    alert('暂无历史日报草稿记录！');
+                    return;
+                }
+
+                const historyList = draftKeys.map(key => {
+                    const draft = JSON.parse(localStorage.getItem(key));
+                    return `编号：${draft['report-id'] || '未知'} | 日期：${draft['date'] || '未知'}`;
+                }).join('\n');
+
+                alert(`历史日报草稿记录（共${draftKeys.length}条）：\n${historyList}`);
+            });
+
+            // 顶部语音输入切换
+            document.getElementById('voice-toggle').addEventListener('click', function() {
+                this.textContent = this.textContent.includes('开启') ? '🎤 关闭语音输入' : '🎤 开启语音输入';
+                alert('全局语音输入功能已切换！\n开启后可在所有支持语音的输入框中快速转换文字。');
+            });
+        });
+    </script>
+</body>
+</html>
