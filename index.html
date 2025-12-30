@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中华圣学《心安工程》日报系统（V3 全量最终版）</title>
+
+    <!-- 81 章元数据 -->
+    <script>
+      let ddjMeta = [];
+      fetch('ddj-meta.json')
+        .then(r => r.json())
+        .then(j => { ddjMeta = j; })
+        .catch(err => console.warn('ddj-meta 加载失败', err));
+    </script>
+
+    <!-- 导出库 -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"微软雅黑","思源黑体",sans-serif}
+        body{background:#f5f5f5;color:#333}
+        .container{max-width:1200px;margin:20px auto;display:flex;gap:20px}
+        .input-panel,.preview-panel{flex:1;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+        .module-title{position:relative;font-size:16px;font-weight:bold;padding-bottom:8px;border-bottom:1px solid #ccc;margin-bottom:10px}
+        .collapse-btn{position:absolute;right:0;top:0;font-size:12px;color:#666;cursor:pointer}
+        .required::after{content:" *";color:#d32f2f}
+        .tag-container{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+        .tag{background:#81c784;color:#fff;padding:2px 8px;border-radius:12px;font-size:12px}
+        input[type=range]{width:100%}
+        .slider-wrapper{display:flex;align-items:center;gap:8px}
+        .shimu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+        @media(max-width:768px){.shimu-grid{grid-template-columns:1fr}}
+        .shimu-item{display:flex;flex-direction:column}
+        .shimu-radio{display:flex;gap:10px;margin-top:4px;font-size:13px}
+        .mini-input{margin-top:4px;font-size:12px;display:none}
+        .dual-input{display:flex;align-items:center;margin:10px 0}
+        .dual-input label{flex:0 0 120px;font-weight:bold}
+        .dual-input input,.dual-input select,.dual-input textarea{flex:1;padding:8px;border:1px solid #ddd;border-radius:4px}
+        .dual-input textarea{height:60px;resize:vertical}
+        .action-bar{text-align:center;margin:20px 0}
+        .btn{padding:10px 20px;margin:5px;border:none;border-radius:4px;cursor:pointer;font-size:14px}
+        .btn.primary{background:#4CAF50;color:#fff}
+        .btn.primary:hover{background:#45a049}
+        @media print{
+            body{background:#fff}
+            .input-panel,.action-bar{display:none}
+            .preview-panel{box-shadow:none;width:210mm;height:297mm;padding:20mm}
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- 左侧录入 -->
+    <div class="input-panel">
+        <h1>📜 中华圣学《心安工程》日报填写（V3 最终版）</h1>
+
+        <!-- 基础信息 -->
+        <section class="module">
+            <div class="module-title">基础信息 <span class="required"></span>
+                <span class="collapse-btn" onclick="toggleModule('base')">折叠 ▲</span>
+            </div>
+            <div id="base">
+                <div class="dual-input"><label>日期：</label><input type="text" id="date" readonly></div>
+                <div class="dual-input"><label>星期：</label><input type="text" id="weekday" readonly></div>
+                <div class="dual-input"><label>日报编号：</label><input type="text" id="report_id" readonly></div>
+                <div class="dual-input">
+                    <label>核心修习方向：</label>
+                    <select id="core_direction" multiple>
+                        <option value="心传">《中华圣学心传》</option>
+                        <option value="心践">《中华圣学心践论》</option>
+                        <option value="五维">《道德经五维生命智慧》</option>
+                    </select>
+                    <div class="tag-container" id="direction_tags"></div>
+                </div>
+                <div class="dual-input"><label>天气/环境：</label><input type="text" id="weather" placeholder="晴/阴/雨/雪 + 居家/书房/户外/办公"></div>
+            </div>
+        </section>
+
+        <!-- 心传 -->
+        <section class="module">
+            <div class="module-title">《中华圣学心传》先天智慧体悟
+                <span class="collapse-btn" onclick="toggleModule('xc')">折叠 ▲</span>
+            </div>
+            <div id="xc">
+                <div class="dual-input">
+                    <label>今日箴言：</label>
+                    <textarea id="xinchuan_proverb" placeholder="本心流露/原文摘录" rows="3" maxlength="200"></textarea>
+                    <button class="voice-btn" onclick="startVoice('xinchuan_proverb')">🎤</button>
+                </div>
+                <div class="dual-input"><label>日常应用场景：</label><textarea id="xinchuan_scene" placeholder="具体场景+践行动作"></textarea></div>
+                <div class="dual-input"><label>八维定位：</label><select id="xinchuan_eight"></select></div>
+                <div class="dual-input">
+                    <label>六序进度：</label>
+                    <select id="xinchuan_six" multiple></select>
+                    <div class="tag-container" id="six_tags"></div>
+                </div>
+                <div class="dual-input">
+                    <label>能量感知（1-10分）：</label>
+                    <div class="slider-wrapper">
+                        <input type="range" id="xinchuan_energy" min="1" max="10" value="5">
+                        <span id="energy_value">5</span>
+                    </div>
+                </div>
+                <div class="dual-input">
+                    <label>妄念类型：</label>
+                    <select id="xinchuan_wangnian" onchange="toggleOther(this)">
+                        <option value="">请选择</option>
+                        <option value="求认可">求认可</option>
+                        <option value="贪速成">贪速成</option>
+                        <option value="攀比心">攀比心</option>
+                        <option value="嗔怒心">嗔怒心</option>
+                        <option value="懈怠心">懈怠心</option>
+                        <option value="其他">其他</option>
+                    </select>
+                    <input type="text" id="xinchuan_wangnian_other" class="mini-input" placeholder="请输入">
+                </div>
+                <div class="dual-input"><label>格除次数：</label><input type="number" id="xinchuan_count" min="0" max="99" value="0"></div>
+            </div>
+        </section>
+
+        <!-- 心践：十目（V3 单选+部分践行） -->
+        <section class="module">
+            <div class="module-title">《中华圣学心践论》十目践行记录
+                <span class="collapse-btn" onclick="toggleModule('xj')">折叠 ▲</span>
+            </div>
+            <div id="xj">
+                <div class="shimu-grid" id="shimu_grid"></div>
+                <div class="dual-input">
+                    <label>焊缝能量密度（1-10分）：</label>
+                    <div class="slider-wrapper">
+                        <input type="range" id="xinjian_density" min="1" max="10" value="5">
+                        <span id="density_value">5</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 五维：81 章下拉+滑块（完整） -->
+        <section class="module" id="wudao_module" style="display:none">
+            <div class="module-title">《道德经五维生命智慧》量化记录
+                <span class="collapse-btn" onclick="toggleModule('wd')">折叠 ▲</span>
+            </div>
+            <div id="wd">
+                <div class="dual-input">
+                    <label>对应章节：</label>
+                    <select id="daode_chapter" onchange="renderChapterCard()">
+                        <option value="">请选择对应困惑章节</option>
+                        <!-- 第一卷：治神篇（1-20章） -->
+                        <option value="第1章：【道体分离之惑+命名依赖之困】·体道章">第1章：【道体分离之惑+命名依赖之困】·体道章</option>
+                        <option value="第2章：【二元对立之碍+完美主义之偏】·养身章">第2章：【二元对立之碍+完美主义之偏】·养身章</option>
+                        <option value="第3章：【欲望过亢之扰+攀比焦虑之困】·安民章">第3章：【欲望过亢之扰+攀比焦虑之困】·安民章</option>
+                        <option value="第4章：【用道失调之失+创造力枯竭之困】·无源章">第4章：【用道失调之失+创造力枯竭之困】·无源章</option>
+                        <option value="第5章：【情感淡漠之隔+共情待深之缺】·虚用章">第5章：【情感淡漠之隔+共情待深之缺】·虚用章</option>
+                        <option value="第6章：【生命能量待蓄之困+元气涵养之需】·成象章">第6章：【生命能量待蓄之困+元气涵养之需】·成象章</option>
+                        <option value="第7章：【自我中心之执+人际连接之碍】·韬光章">第7章：【自我中心之执+人际连接之碍】·韬光章</option>
+                        <option value="第8章：【竞争焦虑之扰+生存恐惧之困】·易性章">第8章：【竞争焦虑之扰+生存恐惧之困】·易性章</option>
+                        <option value="第9章：【持盈过甚之执+掌控过度之困】·运夷章">第9章：【持盈过甚之执+掌控过度之困】·运夷章</option>
+                        <option value="第10章：【身心分离之惑+知行脱节之困】·能为章">第10章：【身心分离之惑+知行脱节之困】·能为章</option>
+                        <option value="第11章：【有用无用之惑+实用主义之困】·无用章">第11章：【有用无用之惑+实用主义之困】·无用章</option>
+                        <option value="第12章：【感官过载之扰+信息焦虑之困】·检欲章">第12章：【感官过载之扰+信息焦虑之困】·检欲章</option>
+                        <option value="第13章：【宠辱得失之扰+评价依赖之困】·厌耻章">第13章：【宠辱得失之扰+评价依赖之困】·厌耻章</option>
+                        <option value="第14章：【时空错位之惑+时间焦虑之困】·赞玄章">第14章：【时空错位之惑+时间焦虑之困】·赞玄章</option>
+                        <option value="第15章：【人格僵化之碍+身份认同之惑】·显质章">第15章：【人格僵化之碍+身份认同之惑】·显质章</option>
+                        <option value="第16章：【归根之碍+漂泊无根之困】·归根章">第16章：【归根之碍+漂泊无根之困】·归根章</option>
+                        <option value="第17章：【权威依赖之惑+自主决策之困】·淳风章">第17章：【权威依赖之惑+自主决策之困】·淳风章</option>
+                        <option value="第18章：【道德伪善之惑+冷漠疏离之困】·俗薄章">第18章：【道德伪善之惑+冷漠疏离之困】·俗薄章</option>
+                        <option value="第19章：【知识过载之扰+思维固化之困】·还淳章">第19章：【知识过载之扰+思维固化之困】·还淳章</option>
+                        <option value="第20章：【存在孤独之惑+疏离合群之困】·异俗章">第20章：【存在孤独之惑+疏离合群之困】·异俗章</option>
+
+                        <!-- 第二卷：治心篇（21-40章） -->
+                        <option value="第21章：【情志失察之感+情感表达之碍】·虚心章">第21章：【情志失察之感+情感表达之碍】·虚心章</option>
+                        <option value="第22章：【挫折创伤之扰+失败恐惧之困】·益谦章">第22章：【挫折创伤之扰+失败恐惧之困】·益谦章</option>
+                        <option value="第23章：【无常焦虑之惑+控制欲过强之困】·虚极章">第23章：【无常焦虑之惑+控制欲过强之困】·虚极章</option>
+                        <option value="第24章：【虚荣外驰之惑+虚假自体之困】·苦恩章">第24章：【虚荣外驰之惑+虚假自体之困】·苦恩章</option>
+                        <option value="第25章：【方向迷失之惑+导航失灵之困】·象元章">第25章：【方向迷失之惑+导航失灵之困】·象元章</option>
+                        <option value="第26章：【轻重失衡之惑+本末倒置之困】·重德章">第26章：【轻重失衡之惑+本末倒置之困】·重德章</option>
+                        <option value="第27章：【智慧闭塞之惑+认知局限之困】·巧用章">第27章：【智慧闭塞之惑+认知局限之困】·巧用章</option>
+                        <option value="第28章：【刚柔失和之惑+情绪失控之困】·反朴章">第28章：【刚柔失和之惑+情绪失控之困】·反朴章</option>
+                        <option value="第29章：【强力妄为之惑+过度干预之困】·无为章">第29章：【强力妄为之惑+过度干预之困】·无为章</option>
+                        <option value="第30章：【暴力冲突之惑+攻击性倾向之困】·俭武章">第30章：【暴力冲突之惑+攻击性倾向之困】·俭武章</option>
+                        <option value="第31章：【战争心态之扰+敌对思维之困】·偃武章">第31章：【战争心态之扰+敌对思维之困】·偃武章</option>
+                        <option value="第32章：【秩序失序之惑+规则漠视之困】·圣德章">第32章：【秩序失序之惑+规则漠视之困】·圣德章</option>
+                        <option value="第33章：【自知之惑+认知偏差之困】·辨德章">第33章：【自知之惑+认知偏差之困】·辨德章</option>
+                        <option value="第34章：【大小迷失之惑+格局狭隘之困】·任成章">第34章：【大小迷失之惑+格局狭隘之困】·任成章</option>
+                        <option value="第35章：【平淡之扰+刺激依赖之困】·仁德章">第35章：【平淡之扰+刺激依赖之困】·仁德章</option>
+                        <option value="第36章：【微明之惑+预判之困】·微明章">第36章：【微明之惑+预判之困】·微明章</option>
+                        <option value="第37章：【欲望无厌之惑+贪得无厌之困】·为政章">第37章：【欲望无厌之惑+贪得无厌之困】·为政章</option>
+                        <option value="第38章：【上德失落+道德滑坡之困】·论德章">第38章：【上德失落+道德滑坡之困】·论德章</option>
+                        <option value="第39章：【得一之惑+身心失衡之困】·法本章">第39章：【得一之惑+身心失衡之困】·法本章</option>
+                        <option value="第40章：【创造之惑+生命动能停滞之困】·去用章">第40章：【创造之惑+生命动能停滞之困】·去用章</option>
+
+                        <!-- 第三卷：治身篇（41-60章） -->
+                        <option value="第41章：【成长焦虑之惑+大器晚成之困】·同异章">第41章：【成长焦虑之惑+大器晚成之困】·同异章</option>
+                        <option value="第42章：【阴阳失和之惑+内在冲突之困】·道化章">第42章：【阴阳失和之惑+内在冲突之困】·道化章</option>
+                        <option value="第43章：【柔性缺失+刚性过盛之困】·偏用章">第43章：【柔性缺失+刚性过盛之困】·偏用章</option>
+                        <option value="第44章：【名利执念+价值物化之困】·立戒章">第44章：【名利执念+价值物化之困】·立戒章</option>
+                        <option value="第45章：【清静之惑+心神不宁之困】·洪德章">第45章：【清静之惑+心神不宁之困】·洪德章</option>
+                        <option value="第46章：【纵欲耗损之惑+气血亏虚之困】·俭欲章">第46章：【纵欲耗损之惑+气血亏虚之困】·俭欲章</option>
+                        <option value="第47章：【外求之扰+内虚之困】·鉴远章">第47章：【外求之扰+内虚之困】·鉴远章</option>
+                        <option value="第48章：【有为过度之惑+努力耗损之困】·忘知章">第48章：【有为过度之惑+努力耗损之困】·忘知章</option>
+                        <option value="第49章：【分别之惑+偏见之困】·任德章">第49章：【分别之惑+偏见之困】·任德章</option>
+                        <option value="第50章：【生死之惑+存在之困】·贵生章">第50章：【生死之惑+存在之困】·贵生章</option>
+                        <option value="第51章：【玄德不养之惑+德性不足之困】·养德章">第51章：【玄德不养之惑+德性不足之困】·养德章</option>
+                        <option value="第52章：【母体失联之惑+归属缺失之困】·归元章">第52章：【母体失联之惑+归属缺失之困】·归元章</option>
+                        <option value="第53章：【邪径迷恋之惑+捷径依赖之困】·益证章">第53章：【邪径迷恋之惑+捷径依赖之困】·益证章</option>
+                        <option value="第54章：【根基不牢之惑+基础薄弱之困】·修观章">第54章：【根基不牢之惑+基础薄弱之困】·修观章</option>
+                        <option value="第55章：【赤子失真之惑+纯真丧失之困】·玄符章">第55章：【赤子失真之惑+纯真丧失之困】·玄符章</option>
+                        <option value="第56章：【是非纠缠之惑+争辩成瘾之困】·玄德章">第56章：【是非纠缠之惑+争辩成瘾之困】·玄德章</option>
+                        <option value="第57章：【以奇治国之惑+投机取巧之困】·淳风章">第57章：【以奇治国之惑+投机取巧之困】·淳风章</option>
+                        <option value="第58章：【福祸迷惑之惑+得失焦虑之困】·顺化章">第58章：【福祸迷惑之惑+得失焦虑之困】·顺化章</option>
+                        <option value="第59章：【积蓄障碍之惑+储备不足之困】·守道章">第59章：【积蓄障碍之惑+储备不足之困】·守道章</option>
+                        <option value="第60章：【复杂焦虑之惑+简化能力之困】·居位章">第60章：【复杂焦虑之惑+简化能力之困】·居位章</option>
+
+                        <!-- 第四卷：治性篇（61-80章） -->
+                        <option value="第61章：【谦卑障碍之惑+傲慢自负之困】·谦德章">第61章：【谦卑障碍之惑+傲慢自负之困】·谦德章</option>
+                        <option value="第62章：【为贵之惑+本末倒置之困】·为道章">第62章：【为贵之惑+本末倒置之困】·为道章</option>
+                        <option value="第63章：【大事难为之惑+畏难情绪之困】·为无为章">第63章：【大事难为之惑+畏难情绪之困】·为无为章</option>
+                        <option value="第64章：【未兆未察之惑+危机意识之困】·守微章">第64章：【未兆未察之惑+危机意识之困】·守微章</option>
+                        <option value="第65章：【明民之惑+沟通障碍之困】·淳德章">第65章：【明民之惑+沟通障碍之困】·淳德章</option>
+                        <option value="第66章：【江海为下之惑+谦下不足之困】·后己章">第66章：【江海为下之惑+谦下不足之困】·后己章</option>
+                        <option value="第67章：【三宝遗失之惑+德性缺失之困】·三宝章">第67章：【三宝遗失之惑+德性缺失之困】·三宝章</option>
+                        <option value="第68章：【不争之德之惑+好胜心过强之困】·配天章">第68章：【不争之德之惑+好胜心过强之困】·配天章</option>
+                        <option value="第69章：【用兵有言之惑+冲突倾向之困】·玄用章">第69章：【用兵有言之惑+冲突倾向之困】·玄用章</option>
+                        <option value="第70章：【知稀之惑+真知匮乏之困】·知难章">第70章：【知稀之惑+真知匮乏之困】·知难章</option>
+                        <option value="第71章：【知病之惑+认知盲区之困】·知病章">第71章：【知病之惑+认知盲区之困】·知病章</option>
+                        <option value="第72章：【民不畏威之惑+规则漠视之困】·爱身章">第72章：【民不畏威之惑+规则漠视之困】·爱身章</option>
+                        <option value="第73章：【天网失敬之惑+侥幸妄为之困】·任为章">第73章：【天网失敬之惑+侥幸妄为之困】·任为章</option>
+                        <option value="第74章：【民不畏死之惑+生命漠视之困】·制惑章">第74章：【民不畏死之惑+生命漠视之困】·制惑章</option>
+                        <option value="第75章：【民生艰难之惑+生存压力之困】·贪损章">第75章：【民生艰难之惑+生存压力之困】·贪损章</option>
+                        <option value="第76章：【刚硬偏执之惑+柔润不足之困】·戒强章">第76章：【刚硬偏执之惑+柔润不足之困】·戒强章</option>
+                        <option value="第77章：【天道失衡之惑+公平执念之困】·天道章">第77章：【天道失衡之惑+公平执念之困】·天道章</option>
+                        <option value="第78章：【柔水攻坚之惑+以柔克刚之碍】·任信章">第78章：【柔水攻坚之惑+以柔克刚之碍】·任信章</option>
+                        <option value="第79章：【和大怨余怨之惑+怨恨执念之困】·任德章">第79章：【和大怨余怨之惑+怨恨执念之困】·任德章</option>
+                        <option value="第80章：【理想主义+现实适应之困】·独立章">第80章：【理想主义+现实适应之困】·独立章</option>
+
+                        <!-- 第五卷：治世篇（81章） -->
+                        <option value="第81章：【生命圆满之惑+价值混乱之困】·显质章">第81章：【生命圆满之惑+价值混乱之困】·显质章</option>
+                    </select>
+                    <div id="chapter_meta"></div>
+                    <div class="form-hint" id="chapter_tip" style="margin-top:8px;color:#2E7D32;"></div>
+                </div>
+
+                <div class="dual-input"><label>治神时长（分钟）：</label><input type="number" id="wudao_1" min="0" step="0.5"></div>
+                <div class="dual-input"><label>HRV（ms²）：</label><input type="number" id="wudao_hrv" min="0"></div>
+                <div class="dual-input">
+                    <label>神聚度（1-10分）：</label>
+                    <div class="slider-wrapper">
+                        <input type="range" id="wudao_2" min="1" max="10" value="5">
+                        <span id="wudao2_value">5</span>
+                    </div>
+                </div>
+                <div class="dual-input">
+                    <label>情绪稳定度（1-10分）：</label>
+                    <div class="slider-wrapper">
+                        <input type="range" id="wudao_3" min="1" max="10" value="5">
+                        <span id="wudao3_value">5</span>
+                    </div>
+                </div>
+                <div class="dual-input"><label>睡眠时长（小时）：</label><input type="number" id="wudao_4" min="0" step="0.1"></div>
+                <div class="dual-input">
+                    <label>互动满意度（1-10分）：</label>
+                    <div class="slider-wrapper">
+                        <input type="range" id="wudao_5" min="1" max="10" value="5">
+                        <span id="wudao5_value">5</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 总结与规划 -->
+        <section class="module">
+            <div class="module-title">总结与明日规划 <span class="required"></span>
+                <span class="collapse-btn" onclick="toggleModule('sum')">折叠 ▲</span>
+            </div>
+            <div id="sum">
+                <div class="dual-input">
+                    <label>今日核心感悟：</label>
+                    <textarea id="summary_feeling" placeholder="元认知反思（≥15字）" rows="4"></textarea>
+                    <button class="voice-btn" onclick="startVoice('summary_feeling')">🎤</button>
+                </div>
+                <div class="dual-input">
+                    <label>数据亮点：</label>
+                    <div style="display:flex;gap:8px">
+                        <input type="text" id="summary_highlight" placeholder="例：心践完成率90%">
+                        <button type="button" class="core-component" onclick="autoHighlight()">提取亮点</button>
+                    </div>
+                </div>
+                <div class="dual-input"><label>明日重点-心传：</label><select id="plan_xinchuan"></select></div>
+                <div class="dual-input"><label>明日重点-心践：</label><select id="plan_xinjian"></select></div>
+            </div>
+        </section>
+
+        <!-- 操作栏 -->
+        <div class="action-bar">
+            <button class="btn primary" onclick="saveReport()">💾 保存并生成日报</button>
+            <button class="btn" onclick="exportPDF()">📄 导出PDF</button>
+            <button class="btn" onclick="exportPNG()">🖼️ 导出图片</button>
+            <button class="btn" onclick="saveDraft()">📝 保存草稿</button>
+        </div>
+    </div>
+
+    <!-- 右侧预览 -->
+    <div class="preview-panel">
+        <h2>📊 实时预览（自动生成）</h2>
+        <div id="live_preview"></div>
+    </div>
+</div>
+
+<script>
+/* ====================  配置  ==================== */
+const CONFIG = {
+    ten_items: ["格念","正心","修身","处事","接物","齐家","济世","一贯","成性","化民"],
+    eight_dims: ["道维-破妄见真","德维-积德显真","仁维-仁爱显真","义维-义行守真","礼维-礼序安真","智维-明智辨真","信维-诚信归真","融维-圆融通真"],
+    core_dir: {"心传":"《中华圣学心传》","心践":"《中华圣学心践论》","五维":"《道德经五维生命智慧》"},
+    chapters: {
+        "第1章：【道体分离之惑+命名依赖之困】·体道章":"治神篇",
+        "第2章：【二元对立之碍+完美主义之偏】·养身章":"治神篇",
+        "第3章：【欲望过亢之扰+攀比焦虑之困】·安民章":"治神篇",
+        "第81章：【生命圆满之惑+价值混乱之困】·显质章":"治世篇"
+    }
+};
+
+/* ====================  初始化  ==================== */
+window.onload = ()=>{
+    initBasicInfo();
+    buildSelects();
+    buildShimu();
+    loadDraft();
+    startAutoSave();
+    attachEvents();
+};
+
+function initBasicInfo() {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    const weekDay = ['日','一','二','三','四','五','六'][today.getDay()];
+    document.getElementById('date').value = dateStr;
+    document.getElementById('weekday').value = '星期' + weekDay;
+    const reports = JSON.parse(localStorage.getItem('xinan_reports') || '[]');
+    const nextId = String(reports.length + 1).padStart(3,'0');
+    document.getElementById('report_id').value = 'XN' + dateStr.replace(/-/g,'') + nextId;
+}
+
+function buildSelects() {
+    // 核心方向
+        // 八维
+    const xe = document.getElementById('xinchuan_eight');
+    CONFIG.eight_dims.forEach(d => {
+        const o = document.createElement('option'); o.value = d; o.textContent = d; xe.appendChild(o);
+    });
+    // 六序
+    const six = ['惊觉','领悟','透视','认取','担当','践行'];
+    const xs = document.getElementById('xinchuan_six');
+    six.forEach(s => {
+        const o = document.createElement('option'); o.value = s; o.textContent = s; xs.appendChild(o);
+    });
+    // 明日计划
+    ['plan_xinchuan','plan_xinjian'].forEach(id => {
+        const sel = document.getElementById(id);
+        const arr = id === 'plan_xinchuan' ? CONFIG.eight_dims : CONFIG.ten_items;
+        arr.forEach(d => {
+            const o = document.createElement('option'); o.value = d; o.textContent = d; sel.appendChild(o);
+        });
+    });
+}
+
+function buildShimu() {
+    const grid = document.getElementById('shimu_grid');
+    CONFIG.ten_items.forEach((name,i) => {
+        const div = document.createElement('div'); div.className = 'shimu-item';
+        div.innerHTML = `
+            <label class="form-label">${i+1}. ${name}</label>
+            <div class="shimu-radio">
+                <label><input type="radio" name="shimu_${i}" value="践行">践行</label>
+                <label><input type="radio" name="shimu_${i}" value="未践行">未践行</label>
+                <label><input type="radio" name="shimu_${i}" value="部分践行">部分</label>
+            </div>
+            <input type="text" class="mini-input" id="shimu_${i}_input" placeholder="例：3次成功2次遗漏">`;
+        grid.appendChild(div);
+    });
+    grid.addEventListener('change', e => {
+        if (e.target.type !== 'radio') return;
+        const idx = e.target.name.split('_')[1];
+        const input = document.getElementById(`shimu_${idx}_input`);
+        input.style.display = e.target.value === '部分践行' ? 'block' : 'none';
+    });
+}
+
+function attachEvents() {
+    // 实时预览
+    document.querySelectorAll('input,textarea,select').forEach(el => {
+        el.addEventListener('input', generateLivePreview);
+        el.addEventListener('change', generateLivePreview);
+    });
+    // 滑块实时数值
+    ['xinchuan_energy','xinjian_density','wudao_2','wudao_3','wudao_5'].forEach(id=>{
+        const s=document.getElementById(id);
+        s&&s.addEventListener('input',()=>{
+            document.getElementById(id.replace('_','_')+'_value').textContent=s.value;
+            generateLivePreview();
+        });
+    });
+    // 核心方向多选标签+控制五维模块显示
+    document.getElementById('core_direction').addEventListener('change', function(){
+        const tags=document.getElementById('direction_tags');
+        tags.innerHTML='';
+        Array.from(this.selectedOptions).forEach(o=>{
+            const t=document.createElement('span'); t.className='tag'; t.textContent=o.value; tags.appendChild(t);
+        });
+        document.getElementById('wudao_module').style.display=
+            this.selectedOptions.length&&Array.from(this.selectedOptions).some(o=>o.value==='五维')?'block':'none';
+        generateLivePreview();
+    });
+    // 六序标签
+    document.getElementById('xinchuan_six').addEventListener('change', function(){
+        const tags=document.getElementById('six_tags');
+        tags.innerHTML='';
+        Array.from(this.selectedOptions).forEach(o=>{
+            const t=document.createElement('span'); t.className='tag'; t.textContent=o.value; tags.appendChild(t);
+        });
+        generateLivePreview();
+    });
+}
+
+/* ====================  数据收集  ==================== */
+function collectFormData(){
+    const data={
+        日期: document.getElementById('date').value,
+        星期: document.getElementById('weekday').value,
+        日报编号: document.getElementById('report_id').value,
+        核心修习方向: Array.from(document.getElementById('core_direction').selectedOptions).map(o=>o.value).join(','),
+        天气: document.getElementById('weather').value,
+        心传箴言: document.getElementById('xinchuan_proverb').value,
+        心传场景: document.getElementById('xinchuan_scene').value,
+        心传八维: document.getElementById('xinchuan_eight').value,
+        心传六序: Array.from(document.getElementById('xinchuan_six').selectedOptions).map(o=>o.value).join(','),
+        心传能量: document.getElementById('xinchuan_energy').value,
+        心传妄念: document.getElementById('xinchuan_wangnian').value,
+        心传格除次数: document.getElementById('xinchuan_count').value,
+        十目践行: {},
+        五维数据: {},
+        今日感悟: document.getElementById('summary_feeling').value,
+        数据亮点: document.getElementById('summary_highlight').value,
+        明日重点心传: document.getElementById('plan_xinchuan').value,
+        明日重点心践: document.getElementById('plan_xinjian').value,
+        生成时间: new Date().toISOString()
+    };
+    CONFIG.ten_items.forEach((item,i)=>{
+        const sel=document.querySelector(`input[name="shimu_${i}"]:checked`);
+        data.十目践行[item]=sel?sel.value:'未践行';
+        if(sel&&sel.value==='部分践行') data.十目践行[item]+='|'+document.getElementById(`shimu_${i}_input`).value;
+    });
+    data.五维数据={
+        对应章节: document.getElementById('daode_chapter').value,
+        治神时长: document.getElementById('wudao_1').value,
+        HRV: document.getElementById('wudao_hrv').value,
+        神聚度: document.getElementById('wudao_2').value,
+        情绪稳定度: document.getElementById('wudao_3').value,
+        睡眠时长: document.getElementById('wudao_4').value,
+        互动满意度: document.getElementById('wudao_5').value
+    };
+    return data;
+}
+
+/* ====================  实时预览  ==================== */
+function generateLivePreview(){
+    const d=collectFormData();
+    const html=`
+        <div class="report-template">
+            <h1>中华圣学修身《心安工程》日报</h1>
+            <h2>${d.日期}（${d.星期}） 编号：${d.日报编号}</h2>
+            <div class="section">
+                <h3>一、《心传》体悟</h3>
+                <p><strong>箴言：</strong>${d.心传箴言||'未填写'}</p>
+                <p><strong>场景：</strong>${d.心传场景||'未填写'}</p>
+                <p><strong>八维：</strong>${d.心传八维||'未选择'}</p>
+                <p><strong>六序：</strong>${d.心传六序||'未选择'}</p>
+                <p><strong>能量：</strong>${d.心传能量||'无'}分</p>
+                <p><strong>妄念/格除：</strong>${d.心传妄念||'无'} / ${d.心传格除次数||0}次</p>
+            </div>
+            <div class="section">
+                <h3>二、《心践》十目</h3>
+                <ul>${CONFIG.ten_items.map(it=>`<li>${it}：${d.十目践行[it]||'未践行'}</li>`).join('')}</ul>
+                <p><strong>焊缝能量密度：</strong>${d.五维数据.神聚度||'无'}分</p>
+            </div>
+            <div class="section">
+                <h3>三、《五维》量化</h3>
+                <p><strong>对应章节：</strong>${d.五维数据.对应章节||'未选择'}</p>
+                <p>治神：${d.五维数据.治神时长}分钟 | HRV：${d.五维数据.HRV}</p>
+                <p>神聚度：${d.五维数据.神聚度}分 | 情绪稳定度：${d.五维数据.情绪稳定度}分</p>
+                <p>睡眠：${d.五维数据.睡眠时长}小时 | 互动满意度：${d.五维数据.互动满意度}分</p>
+            </div>
+            <div class="section">
+                <h3>四、核心感悟</h3>
+                <p>${d.今日感悟||'未填写'}</p>
+                <p><strong>数据亮点：</strong>${d.数据亮点||'无'}</p>
+                <p><strong>明日重点：</strong>心传：${d.明日重点心传||'未设'} | 心践：${d.明日重点心践||'未设'}</p>
+            </div>
+        </div>`;
+    document.getElementById('live_preview').innerHTML=html;
+}
+
+/* ====================  亮点自动提取  ==================== */
+function autoHighlight(){
+    const d=collectFormData();
+    const hl=[];
+    const done=CONFIG.ten_items.filter(it=>d.十目践行[it]==='践行').length;
+    const rate=Math.round(done/10*100);
+    if(rate>=80) hl.push(`心践完成率${rate}%`);
+    if(parseInt(d.心传能量)>=8) hl.push(`能量感知${d.心传能量}分（极佳）`);
+    if(parseFloat(d.五维数据.治神时长)>=20) hl.push(`治神时长${d.五维数据.治神时长}分钟（达标）`);
+    if(parseInt(d.五维数据.情绪稳定度)>=9) hl.push(`情绪稳定度${d.五维数据.情绪稳定度}分（优秀）`);
+    document.getElementById('summary_highlight').value=hl.length?hl.join(' | '):'今日数据平稳，无突出亮点';
+    generateLivePreview();
+}
+
+/* ====================  章节详情卡片  ==================== */
+function renderChapterCard(){
+    const sel=document.getElementById('daode_chapter');
+    const card=document.getElementById('chapter_meta');
+    const obj=ddjMeta.find(m=>m.title===sel.value);
+    if(!obj){card.innerHTML='';return;}
+    card.innerHTML=`
+      <div style="border:1px solid #81c784;border-radius:6px;padding:10px;margin-top:8px;font-size:13px;line-height:1.6">
+        <div style="font-weight:bold;color:#2e7d32">${obj.title} · ${obj.volume}</div>
+        <div style="margin:4px 0"><strong>核心目标：</strong>${obj.coreGoal}</div>
+        <div style="margin:4px 0"><strong>情绪焦点：</strong>${obj.emotionFocus}</div>
+        <div style="margin:4px 0"><strong>关键字段：</strong><span style="color:#d32f2f">${obj.keyField}</span></div>
+        <div style="margin:4px 0"><strong>原文：</strong><em>${obj.originalText}</em></div>
+        <div style="margin:4px 0"><strong>修习指引：</strong>${obj.practiceGuide}</div>
+        <div style="margin:4px 0"><strong>关键词：</strong>${obj.keywords.join(' · ')}</div>
+      </div>`;
+}
+
+/* ====================  折叠/其他  ==================== */
+function toggleModule(areaId){
+    const box=document.getElementById(areaId);
+    const btn=event.target;
+    box.style.display=box.style.display==='none'?'block':'none';
+    btn.textContent=box.style.display==='none'?'展开 ▼':'折叠 ▲';
+}
+function toggleOther(sel){
+    const other=document.getElementById('xinchuan_wangnian_other');
+    other.style.display=sel.value==='其他'?'block':'none';
+}
+
+/* ====================  保存/导出/草稿  ==================== */
+function saveReport(){
+    const data=collectFormData();
+    const required=['日期','星期','日报编号','核心修习方向','今日感悟'];
+    for(let k of required){if(!data[k]||data[k].toString().trim()===''){alert(`【${k}】为必填项！`);return;}}
+    const reports=JSON.parse(localStorage.getItem('xinan_reports')||'[]');
+    reports.push(data);
+    localStorage.setItem('xinan_reports',JSON.stringify(reports));
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`日报_${data.日期}.json`;a.click();
+    URL.revokeObjectURL(url);
+    alert('✅ 日报已保存并下载！');
+}
+function saveDraft(){
+    const data=collectFormData();
+    localStorage.setItem('xinan_draft',JSON.stringify(data));
+    alert('💾 草稿已保存（刷新后自动恢复）');
+}
+function loadDraft(){
+    const draft=localStorage.getItem('xinan_draft');
+    if(!draft)return;
+    const data=JSON.parse(draft);
+    Object.keys(data).forEach(k=>{
+        const el=document.getElementById(k);
+        if(el){
+            if(el.tagName==='SELECT'&&el.multiple){
+                Array.from(el.options).forEach(opt=>opt.selected=data[k].split(',').includes(opt.value));
+            }else{el.value=data[k];}
+        }
+    });
+    generateLivePreview();
+}
+function startAutoSave(){setInterval(saveDraft,30000);}
+async function exportPDF(){
+    const element=document.getElementById('live_preview');
+    if(!element.innerHTML.trim()){alert('请先填写并生成预览');return;}
+    const canvas=await html2canvas(element,{scale:2});
+    const imgData=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const imgWidth=190;
+    const imgHeight=canvas.height*imgWidth/canvas.width;
+    pdf.addImage(imgData,'PNG',10,10,imgWidth,imgHeight);
+    pdf.save(`心安日报_${collectFormData().日期}.pdf`);
+}
+async function exportPNG(){
+    const element=document.getElementById('live_preview');
+    if(!element.innerHTML.trim()){alert('请先填写并生成预览');return;}
+    const canvas=await html2canvas(element,{scale:2});
+    const link=document.createElement('a');
+    link.download=`心安日报_${collectFormData().日期}.png`;
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+}
+function startVoice(fieldId){alert('语音功能需浏览器支持 WebKit SpeechRecognition');}
+</script>
+</body>
+</html>
