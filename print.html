@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>心安日报打印版</title>
+  <style>
+    /* === 去页眉页脚 + 只留居中页码 === */
+    @page{
+      margin:20mm 15mm 10mm;
+      size:A4;
+      @top-left{content:"";}
+      @top-center{content:"";}
+      @top-right{content:"";}
+      @bottom-left{content:"";}
+      @bottom-right{content:"";}
+      @bottom-center{content:counter(page);font-size:12px;color:#000;}
+    }
+    body{margin:0 auto;width:210mm;font:14px/28px "Microsoft YaHei",sans-serif;color:#333}
+    .header{text-align:center;line-height:1.4}
+    .header .title{font-size:22px;font-weight:bold;white-space:nowrap}
+    .header .info{font-size:14px;margin-top:6px}
+    h2{font-size:17px;margin:8px 0 4px;border-bottom:1px solid #81c784}
+    .k{font-weight:bold;color:#000}
+    ul{list-style:disc;padding-left:20px;margin:0}
+    li{margin:0}
+    p{margin:4px 0;page-break-inside:avoid}
+  </style>
+</head>
+<body onload="window.print()">
+  <!-- 表头 -->
+  <div class="header">
+    <div class="title">中华圣学修身《心安工程》日报</div>
+    <div class="info"><span class="k">日期：</span><span id="date"></span>（<span id="week"></span>）　<span class="k">编号：</span><span id="code"></span></div>
+  </div>
+
+  <!-- ① 基础信息 -->
+  <h2>基础信息</h2>
+  <p><span class="k">天气/环境：</span><span id="weather"></span></p>
+  <p><span class="k">核心修习方向：</span><span id="dirs"></span></p>
+
+  <!-- ② 心传体悟 -->
+  <h2>心传体悟</h2>
+  <p><span class="k">箴言：</span><span id="x箴言"></span></p>
+  <p><span class="k">日常应用场景：</span><span id="x场景"></span></p>
+  <p><span class="k">八维定位：</span><span id="x八维"></span></p>
+  <p><span class="k">六序进度：</span></p>
+  <ul id="x六序"></ul>
+  <p><span class="k">能量感知（1-10 分）：</span><span id="x能量"></span></p>
+  <p><span class="k">妄念类型：</span><span id="x妄念"></span>　<span class="k">格除次数：</span><span id="x格除"></span></p>
+
+  <!-- ③ 心践十目 -->
+  <h2>心践十目</h2>
+  <ul id="x十目"></ul>
+  <p><span class="k">生命能量恢复度（1-10 分）：</span><span id="x恢复"></span></p>
+
+  <!-- ④ 五维量化 -->
+  <h2>五维量化</h2>
+  <p><span class="k">对应章节：</span><span id="w章节"></span></p>
+  <p><span class="k">治神时长（分钟）：</span><span id="w治神"></span>　<span class="k">HRV（ms²）：</span><span id="wHRV"></span></p>
+  <p><span class="k">神聚度（1-10 分）：</span><span id="w神聚"></span>　<span class="k">情绪稳定度（1-10 分）：</span><span id="w情绪"></span></p>
+  <p><span class="k">睡眠时长（小时）：</span><span id="w睡眠"></span>　<span class="k">互动满意度（1-10 分）：</span><span id="w互动"></span></p>
+
+  <!-- ⑤ 总结与明日规划 -->
+  <h2>总结与明日规划</h2>
+  <p><span class="k">今日核心感悟：</span><span id="s感悟"></span></p>
+  <p><span class="k">数据亮点：</span><span id="s亮点"></span></p>
+  <p><span class="k">明日重点-心传：</span><span id="p心传"></span></p>
+  <p><span class="k">明日重点-心践：</span><span id="p心践"></span></p>
+
+  <script>
+    (function(){
+      const d = JSON.parse(localStorage.getItem('xinan_printData')||'{}');
+
+      /* ---- 基础信息 ---- */
+      document.getElementById('date').textContent  = d.日期||'';
+      document.getElementById('week').textContent  = d.星期||'';
+      document.getElementById('code').textContent  = d.日报编号||'';
+      document.getElementById('weather').textContent = d.天气||'未填写';
+      document.getElementById('dirs').textContent = (d.核心修习方向||'').split(',').join(' · ');
+
+      /* ---- 心传 ---- */
+      document.getElementById('x箴言').textContent = d.心传箴言||'未填写';
+      document.getElementById('x场景').textContent = d.心传场景||'未填写';
+      document.getElementById('x八维').textContent = d.心传八维||'未选择';
+      const 六序 = (d.心传六序 || '').split(',').filter(s => s.trim());
+      document.getElementById('x六序').innerHTML = 六序.length
+        ? 六序.map(s => `<li>${s.trim()}</li>`).join('')
+        : '<li>未选择</li>';
+      document.getElementById('x能量').textContent = d.心传能量||'无';
+      document.getElementById('x妄念').textContent = d.心传妄念||'无';
+      document.getElementById('x格除').textContent = d.心传格除次数||0;
+
+      /* ---- 心践十目 ---- */
+      const 十目 = Object.entries(d.十目践行||{});
+      document.getElementById('x十目').innerHTML = 十目.length
+        ? 十目.map(([k,v])=>`<li><span class="k">${k}：</span>${v}</li>`).join('')
+        : '<li>暂无记录</li>';
+      document.getElementById('x恢复').textContent = d.五维数据?.神聚度||'无';
+
+      /* ---- 五维 ---- */
+      document.getElementById('w章节').textContent = d.五维数据?.对应章节||'未选择';
+      document.getElementById('w治神').textContent  = d.五维数据?.治神时长||'';
+      document.getElementById('wHRV').textContent   = d.五维数据?.HRV||'';
+      document.getElementById('w神聚').textContent  = d.五维数据?.神聚度||'无';
+      document.getElementById('w情绪').textContent  = d.五维数据?.情绪稳定度||'无';
+      document.getElementById('w睡眠').textContent  = d.五维数据?.睡眠时长||'';
+      document.getElementById('w互动').textContent  = d.五维数据?.互动满意度||'无';
+
+      /* ---- 总结 ---- */
+      document.getElementById('s感悟').textContent = d.今日感悟||'未填写';
+      document.getElementById('s亮点').textContent = d.数据亮点||'无';
+      document.getElementById('p心传').textContent = d.明日重点心传||'未设';
+      document.getElementById('p心践').textContent = d.明日重点心践||'未设';
+    })();
+  </script>
+</body>
+</html>
